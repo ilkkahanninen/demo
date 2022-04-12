@@ -4,6 +4,7 @@
   "description": "Baby's first raymarching implementation",
   "scripts": {
     "dev": "parcel src/index.html",
+    "clean": "rm -rf .parcel-cache && rm -rf dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Ilkka Hänninen",
