@@ -1,4 +1,5 @@
 import { config } from "./config";
+import { play } from "./music";
 import { load, SceneInfo } from "./scene/scene";
 import { initBuffer } from "./webgl";
 
@@ -26,6 +27,10 @@ function main() {
   };
 
   renderNext();
+
+  document.body.addEventListener("click", () => {
+    play();
+  });
 }
 
 function now(): number {
