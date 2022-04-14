@@ -1,29 +1,61 @@
 #pragma glslify: sphere = require("./primitives/sphere.frag")
 #pragma glslify: cube = require("./primitives/cube.frag")
-#pragma glslify: smIntersect = require("./ops/smIntersect.frag")
-#pragma glslify: smUnion = require("./ops/smUnion.frag")
-#pragma glslify: smDiff = require("./ops/smDiff.frag")
+#pragma glslify: cappedCylinder = require("./primitives/cappedCylinder.frag")
 #pragma glslify: rayDirection = require("./projection/rayDirection.frag")
 #pragma glslify: viewMatrix = require("./projection/viewMatrix.frag")
+#pragma glslify: opUnion = require("./ops/opUnion.frag")
+#pragma glslify: opIntersect = require("./ops/opIntersect.frag")
+#pragma glslify: opDiff = require("./ops/opDiff.frag")
+#pragma glslify: rotateX = require("./transform/rotateX.frag")
+#pragma glslify: rotateZ = require("./transform/rotateZ.frag")
+#pragma glslify: rotateY = require("./transform/rotateY.frag")
 
 precision highp float;
 
 const int MAX_MARCHING_STEPS = 255;
 const float MIN_DIST = 0.0;
-const float MAX_DIST = 100.0;
-const float EPSILON = 0.0001;
+const float MAX_DIST = 15.0;
+const float EPSILON = 0.00001;
+const float STEP_CORRECTION = 0.9; // lower -> better quality, but slower
+const float PI = 3.1415926535897932384626433832795;
 
 varying lowp vec2 vResolution;
 varying lowp float vTime;
 
-float render(vec3 samplePoint) {
-  float sphereDist = sphere(samplePoint / 1.5) * 1.5;
-  float size = 1.0 + sin(vTime * 7.0) * 0.5;
-  float sphereDist2 = sphere((samplePoint + 0.5 * vec3(sin(vTime * 1.4), sin(vTime * 1.1), sin(vTime * 1.2))) / size) * size;
-  float cubeDist = cube(samplePoint + vec3(sin(vTime * 1.2), sin(vTime), sin(vTime * 1.3)));
-  float cubeDist2 = cube((samplePoint + vec3(sin(vTime * 1.2), sin(vTime), sin(vTime * 1.3))) / 1.5) * 1.5;
-  float distortion = sin((samplePoint.x * samplePoint.y * samplePoint.z) * 5.9 + vTime) * 0.02;
-  return distortion + smUnion(smDiff(cubeDist, sphereDist, 0.1), smIntersect(sphereDist2, cubeDist2, 0.1), 0.3);
+float logo(vec3 p0) {
+  vec3 p = p0 + vec3(0.0, 0.05, 0.0);
+  float d = 0.181;
+  float rJalka = cube(p + vec3(-0.2185, 0.044, 0.0), vec3(0.181, 0.819, d) / 2.0);
+  float rJalkaLaajennos = cube(p + vec3(-0.175, -0.102, 0.0), vec3(0.28, 0.525, d) / 2.0);
+  float rJalkaLeikkaus = cube(p + vec3(-0.053, -0.093, 0.0), vec3(0.15, 0.186, d * 2.0) / 2.0);
+  float osa1 = opDiff(opUnion(rJalka, rJalkaLaajennos), rJalkaLeikkaus);
+
+  float rKaari = cappedCylinder(rotateX(p + vec3(-0.029, -0.194, 0.0), PI / 2.0), 0.7 / 2.0, d / 2.0);
+  float rKaariPuolitus = cube(p + vec3(-0.22, -0.203, 0.0), vec3(0.357, 0.8, d * 3.0) / 2.0);
+  float rKaariSisus = cappedCylinder(rotateX(p + vec3(-0.029, -0.194, 0.0), PI / 2.0), 0.26 / 2.0, d * 2.0);
+  float osa2 = opDiff(opDiff(rKaari, rKaariPuolitus), rKaariSisus);
+
+  float rVino = cube(rotateZ(p + vec3(0.17, 0.25, 0.0), -0.537561), vec3(0.189, 0.589, d) / 2.0);
+  float rVinoLeikkaus = cube(p + vec3(0.264, 0.537, 0.0), vec3(0.46, 0.164, d * 2.0) / 2.0);
+  float osa3 = opDiff(rVino, rVinoLeikkaus);
+
+  return opUnion(opUnion(osa1, osa2), osa3);
+}
+
+float environment(vec3 p) {
+  const float f = 8.0;
+  const float size = 5.0;
+  float s = sphere(p / size) * size;
+  float distort = sin(p.x * 5.0) * sin(p.y * 1.0) * sin(p.z * f);
+  return -s + distort * 0.1;
+}
+
+float render(vec3 p) {
+  vec3 p1 = rotateY(p, vTime);
+  float logoDisplacement = sin(20.0 * p1.x + 17.0 * p1.y + 15.0 * p1.z + vTime * p.y * 10.0) * sin(15.0 * p1.x + 16.0 * p1.y + 19.0 * p1.z + vTime * 1.3);
+  float displacedLogo = logo(p1) + logoDisplacement * sin(vTime) * 0.01;
+
+  return opUnion(environment(p), displacedLogo);
 }
 
 float shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, float end) {
@@ -33,7 +65,7 @@ float shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, f
     if (dist < EPSILON) {
       return depth;
     }
-    depth += dist;
+    depth += dist * STEP_CORRECTION;
     if (depth >= end) {
       return end;
     }
@@ -117,7 +149,7 @@ vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 e
 
 void main() {
   vec3 viewDir = rayDirection(45.0, vResolution.xy, gl_FragCoord.xy);
-  vec3 eye = vec3(8.0, 5.0, 7.0);
+  vec3 eye = vec3(3.0 * cos(vTime * 0.2), 3.0 * sin(vTime * 0.15), 3.0 * sin(vTime * 0.2));
 
   mat4 viewToWorld = viewMatrix(eye, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
 
@@ -136,7 +168,7 @@ void main() {
   vec3 K_a = vec3(0.1, 0.15, 0.2);
   vec3 K_d = vec3(0.2, 0.7, 0.8);
   vec3 K_s = vec3(1.0, 1.0, 0.0);
-  float shininess = 10.0;
+  float shininess = 100.0;
 
   vec3 color = phongIllumination(K_a, K_d, K_s, shininess, p, eye);
 
