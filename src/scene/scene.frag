@@ -11,6 +11,7 @@ precision highp float;
 #pragma glslify: opRUnion = require("./ops/opRUnion.frag")
 #pragma glslify: opRIntersect = require("./ops/opRIntersect.frag")
 #pragma glslify: opRDiff = require("./ops/opRDiff.frag")
+#pragma glslify: smUnion = require("./ops/smUnion.frag")
 #pragma glslify: rotateX = require("./transform/rotateX.frag")
 #pragma glslify: rotateZ = require("./transform/rotateZ.frag")
 #pragma glslify: rotateY = require("./transform/rotateY.frag")
@@ -33,6 +34,7 @@ varying lowp float vTime;
 
 const int MATERIAL_ENV = 0;
 const int MATERIAL_LOGO = 1;
+const int MATERIAL_BALLS = 2;
 
 vec4 result(float distance, int material) {
   return vec4(distance, float(material), 0.0, 0.0);
@@ -66,8 +68,20 @@ vec4 environment(vec3 p) {
   const float f = 8.0;
   const float size = 5.0;
   float s = sphere(p / size) * size;
-  float distort = sin(p.x * 5.0) * sin(p.y * 1.0) * sin(p.z * f);
+  float distort = sin(p.x * 5.0) * sin(p.y * 2.0) * sin(p.z * f);
   return result(-s + distort * 0.1, MATERIAL_ENV);
+}
+
+vec4 metaBalls(vec3 p) {
+  const float size = 0.15;
+  float dist = 1000.0;
+  for (int i = 0; i < 16; i++) {
+    float f = pow(float(i), 2.0) + vTime * (1.0 + float(i) * 0.2);
+    vec3 p1 = p + vec3(sin(f), cos(f * 0.9), sin(f * 0.4)) * 0.3;
+    float s = sphere(p1 / size) * size;
+    dist = smUnion(dist, s, 0.3 + sin(vTime) * 0.3);
+  }
+  return result(dist, MATERIAL_BALLS);
 }
 
 vec4 render(vec3 p) {
@@ -76,7 +90,9 @@ vec4 render(vec3 p) {
   float logoDisplacement = sin(30.0 * p1.x + 27.0 * p1.y + 250.0 * p1.z) + sin(30.0 * p.y + 10.0 * vTime);
   vec4 displacedLogo = logo(p1) + displace(logoDisplacement * sin(vTime) * 0.005);
 
-  return opRUnion(environment(p), displacedLogo);
+  vec4 balls = metaBalls(p);
+
+  return opRUnion(environment(p), mod(vTime, 2.0) < 1.0 ? displacedLogo : balls);
 }
 
 vec4 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, float end) {
@@ -203,7 +219,14 @@ void main() {
   vec3 p = eye + dist * worldDir;
   vec3 color = vec3(1.0, 0.0, 0.0);
 
-  if (material > 0.5) {
+  if (material > 1.5) {
+    // Balls
+    vec3 K_a = vec3(0.0, 0.0, 0.2);
+    vec3 K_d = vec3(0.4, 0.8, 0.3);
+    vec3 K_s = vec3(1.0, 1.0, 1.0);
+    float shininess = 200.0;
+    color = phongIllumination(K_a, K_d, K_s, shininess, p, eye);
+  } else if (material > 0.5) {
     // Logo
     vec3 K_a = vec3(0.2, 0.1, 0.1);
     vec3 K_d = vec3(1.0, 0.9, 0.5);
