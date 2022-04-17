@@ -35,6 +35,7 @@ varying lowp float vTime;
 const int MATERIAL_ENV = 0;
 const int MATERIAL_LOGO = 1;
 const int MATERIAL_BALLS = 2;
+const int MATERIAL_ENV2 = 3;
 
 vec4 result(float distance, int material) {
   return vec4(distance, float(material), 0.0, 0.0);
@@ -72,27 +73,62 @@ vec4 environment(vec3 p) {
   return result(-s + distort * 0.1, MATERIAL_ENV);
 }
 
+vec3 opRep(in vec3 p, in vec3 c) {
+  return mod(p + 0.5 * c, c) - 0.5 * c;
+}
+
+vec3 opTwist(vec3 p) {
+  const float k = 1.0;
+  float c = cos(k * p.y);
+  float s = sin(k * p.y);
+  mat2 m = mat2(c, -s, s, c);
+  return vec3(m * p.xz, p.y);
+}
+
+vec4 environment2(vec3 p0) {
+  vec3 p = opTwist(p0);
+
+  const float size = 4.0;
+
+  float s = sphere(p / size) * size;
+
+  float size2 = 1.3 + 0.2 * mod(vTime, 1.0);
+  float s2 = sphere(opRep(p, vec3(2.0, 2.0, 2.0)) / size2) * size2;
+
+  float f = 8.0 * length(p);
+  float distort = sin(sin(p.x * f) * sin(p.y * f) * sin(p.z * f));
+
+  return result(opDiff(s, s2) + 0.01 * distort, MATERIAL_ENV2);
+}
+
+vec4 envUnion(vec3 p) {
+  return opRUnion(environment(p), environment2(p));
+}
+
 vec4 metaBalls(vec3 p) {
-  const float size = 0.15;
+  const float size = 0.25;
   float dist = 1000.0;
-  for (int i = 0; i < 16; i++) {
+  for (int i = 0; i < 8; i++) {
     float f = pow(float(i), 2.0) + vTime * (1.0 + float(i) * 0.2);
-    vec3 p1 = p + vec3(sin(f), cos(f * 0.9), sin(f * 0.4)) * 0.3;
+    vec3 p1 = p + vec3(sin(f * 0.5), cos(f * 0.4), sin(f * 0.3)) * 0.5;
     float s = sphere(p1 / size) * size;
     dist = smUnion(dist, s, 0.3 + sin(vTime) * 0.3);
   }
-  return result(dist, MATERIAL_BALLS);
+  float distort = sin(20.0 * p.x) * sin(20.0 * p.y) * sin(20.0 * p.z);
+  return result(dist + distort * (0.05 + 0.04 * sin(vTime * 0.3)), MATERIAL_BALLS);
 }
 
 vec4 render(vec3 p) {
   vec3 p1 = rotateY(p, vTime);
 
+  vec4 env = envUnion(p1);
+
   float logoDisplacement = sin(30.0 * p1.x + 27.0 * p1.y + 250.0 * p1.z) + sin(30.0 * p.y + 10.0 * vTime);
   vec4 displacedLogo = logo(p1) + displace(logoDisplacement * sin(vTime) * 0.005);
 
-  vec4 balls = metaBalls(p);
+  vec4 balls = metaBalls(p1);
 
-  return opRUnion(environment(p), mod(vTime, 2.0) < 1.0 ? displacedLogo : balls);
+  return opRUnion(env, mod(vTime, 2.0) < 1.0 ? displacedLogo : balls);
 }
 
 vec4 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, float end) {
@@ -105,6 +141,24 @@ vec4 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, fl
       return r;
     }
     depth += dist * STEP_CORRECTION;
+    if (depth >= end) {
+      r.x = end;
+      return r;
+    }
+  }
+  return result(end, -1);
+}
+
+vec4 shortestDistanceToEnvSurface(vec3 eye, vec3 marchingDirection, float start, float end) {
+  float depth = start;
+  for (int i = 0; i < MAX_MARCHING_STEPS; i++) {
+    vec4 r = envUnion(eye + depth * marchingDirection);
+    float dist = r.x;
+    if (dist < EPSILON) {
+      r.x = depth;
+      return r;
+    }
+    depth += dist;
     if (depth >= end) {
       r.x = end;
       return r;
@@ -176,7 +230,7 @@ vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 e
   vec3 color = ambientLight * k_a;
   float y = sin(vTime * 2.0) * 4.0;
 
-  vec3 light1Pos = vec3(4.0 * sin(vTime), y, 4.0 * cos(vTime));
+  vec3 light1Pos = vec3(3.0 * cos(vTime * 0.2), 0.0, 3.0 * sin(vTime * 0.2));
   vec3 light1Intensity = vec3(0.4, 0.4, 0.4);
 
   color += phongContribForLight(k_d, k_s, alpha, p, eye, light1Pos, light1Intensity);
@@ -188,7 +242,7 @@ vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 e
   return color;
 }
 
-vec3 vignette(vec3 color) {
+vec3 postProcess(vec3 color) {
   float maxDist = length(vResolution.xy) / 2.0;
   float strength = pow(length(gl_FragCoord.xy - vResolution.xy / 2.0) / maxDist, 5.0);
   strength *= 0.6 + 0.6 * sin(gl_FragCoord.y * 2.0 + vTime * 5.0); // scanlines
@@ -196,11 +250,60 @@ vec3 vignette(vec3 color) {
   return color * (1.3 - strength);
 }
 
-void main() {
-  vec3 viewDir = rayDirection(45.0, vResolution.xy, gl_FragCoord.xy);
-  vec3 eye = vec3(3.0 * cos(vTime * 0.2), 1.0 * sin(vTime * 0.3), 3.0 * sin(vTime * 0.2));
+vec3 envVignette(vec3 color) {
+  float maxDist = length(vResolution.xy) / 2.0;
+  float strength = pow(length(gl_FragCoord.xy - vResolution.xy / 2.0) / maxDist, 2.0);
+  return color * (0.5 + 0.5 * strength);
+}
 
-  eye.x += sin(gl_FragCoord.y * 0.001 + vTime);
+vec3 calcEnvMaterial(vec3 p, vec3 eye, int material) {
+  if (material == MATERIAL_ENV) {
+    vec3 K_a = vec3(0.0, 0.15, 0.2);
+    vec3 K_d = vec3(0.0, 0.2 + sin(vTime) * 0.2, 0.7);
+    vec3 K_s = vec3(0.5, 1.0, 0.8 + sin(vTime * 0.5) * 0.1);
+    float shininess = 50.0 + sin(vTime * 16.0) * 40.0;
+    return phongIllumination(K_a, K_d, K_s, shininess, p, eye);
+  }
+
+  vec3 K_a = vec3(0.0, 0.0, 0.5);
+  vec3 K_d = vec3(1.0, 0.0, 0.0);
+  vec3 K_s = vec3(1.0, 1.0, 1.0);
+  float shininess = 150.0 + sin(vTime * 16.0) * 40.0;
+  return phongIllumination(K_a, K_d, K_s, shininess, p, eye);
+}
+
+vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, int material) {
+  if (material == MATERIAL_ENV) {
+    return calcEnvMaterial(p, eye, MATERIAL_ENV);
+  } else if (material == MATERIAL_ENV2) {
+    return calcEnvMaterial(p, eye, MATERIAL_ENV2);
+  } else if (material == MATERIAL_BALLS) {
+    vec3 reflectionDir = reflect(worldDir, estimateNormal(p));
+    vec4 rEnv = shortestDistanceToEnvSurface(p, reflectionDir, MIN_DIST, MAX_DIST);
+
+    vec3 reflectionColor = calcEnvMaterial(p + rEnv.x * reflectionDir, p, int(rEnv.y));
+
+    vec3 K_a = vec3(0.3, 0.3, 0.3);
+    vec3 K_d = vec3(1.0, 1.0, 1.0);
+    vec3 K_s = vec3(1.0, 1.0, 1.0);
+    float shininess = 10.0;
+    vec3 bodyColor = phongIllumination(K_a, K_d, K_s, shininess, p, eye);
+
+    return bodyColor * reflectionColor * 2.5;
+  } else if (material == MATERIAL_LOGO) {
+    vec3 K_a = vec3(0.4, 0.3, 0.2);
+    vec3 K_d = vec3(1.0, 0.9, 0.5);
+    vec3 K_s = vec3(1.0, 1.0, 0.8);
+    float shininess = 10.0;
+    return phongIllumination(K_a, K_d, K_s, shininess, p, eye);
+  }
+
+  return vec3(1.0, 0.0, 0.0);
+}
+
+void main() {
+  vec3 viewDir = rayDirection(90.0 + sin(floor(vTime) * 1000.0) * 60.0, vResolution.xy, gl_FragCoord.xy);
+  vec3 eye = vec3(3.0 * cos(vTime * 0.2), 0.0, 3.0 * sin(vTime * 0.2));
 
   mat4 viewToWorld = viewMatrix(eye, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
 
@@ -217,30 +320,7 @@ void main() {
   }
 
   vec3 p = eye + dist * worldDir;
-  vec3 color = vec3(1.0, 0.0, 0.0);
+  vec3 color = calcMaterial(p, eye, worldDir, int(material));
 
-  if (material > 1.5) {
-    // Balls
-    vec3 K_a = vec3(0.0, 0.0, 0.2);
-    vec3 K_d = vec3(0.4, 0.8, 0.3);
-    vec3 K_s = vec3(1.0, 1.0, 1.0);
-    float shininess = 200.0;
-    color = phongIllumination(K_a, K_d, K_s, shininess, p, eye);
-  } else if (material > 0.5) {
-    // Logo
-    vec3 K_a = vec3(0.2, 0.1, 0.1);
-    vec3 K_d = vec3(1.0, 0.9, 0.5);
-    vec3 K_s = vec3(1.0, 1.0, 0.5);
-    float shininess = 2.0;
-    color = phongIllumination(K_a, K_d, K_s, shininess, p, eye);
-  } else if (material > -0.5) {
-    // Env
-    vec3 K_a = vec3(0.0, 0.15, 0.2);
-    vec3 K_d = vec3(0.0, 0.5, 0.8);
-    vec3 K_s = vec3(1.0, 1.0, 1.0);
-    float shininess = 100.0;
-    color = phongIllumination(K_a, K_d, K_s, shininess, p, eye);
-  }
-
-  gl_FragColor = vec4(vignette(color), 1.0);
+  gl_FragColor = vec4(postProcess(color), 1.0);
 }
