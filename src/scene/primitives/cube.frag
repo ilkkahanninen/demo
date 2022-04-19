@@ -1,5 +1,3 @@
-precision highp float;
-
 /**
  * Signed distance function for a cube centered at the origin
  * with width = height = length = 2.0

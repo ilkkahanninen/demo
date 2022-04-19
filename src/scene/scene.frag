@@ -1,4 +1,7 @@
+#version 300 es
+//[
 precision highp float;
+//]
 
 #pragma glslify: sphere = require("./primitives/sphere.frag")
 #pragma glslify: cube = require("./primitives/cube.frag")
@@ -21,10 +24,11 @@ const float MIN_DIST = 0.0;
 const float MAX_DIST = 15.0;
 const float EPSILON = 0.00001;
 const float STEP_CORRECTION = 0.9; // lower -> better quality, but slower
-const float PI = 3.1415926535897932384626433832795;
+const float PI = 3.1415;
 
-varying lowp vec2 vResolution;
-varying lowp float vTime;
+uniform vec2 _R;
+uniform float _T;
+out vec4 _C;
 
 // Result structure:
 //  x = distance
@@ -92,7 +96,7 @@ vec4 environment2(vec3 p0) {
 
   float s = sphere(p / size) * size;
 
-  float size2 = 1.3 + 0.2 * mod(vTime, 1.0);
+  float size2 = 1.3 + 0.2 * mod(_T, 1.0);
   float s2 = sphere(opRep(p, vec3(2.0, 2.0, 2.0)) / size2) * size2;
 
   float f = 8.0 * length(p);
@@ -109,26 +113,26 @@ vec4 metaBalls(vec3 p) {
   const float size = 0.25;
   float dist = 1000.0;
   for (int i = 0; i < 8; i++) {
-    float f = pow(float(i), 2.0) + vTime * (1.0 + float(i) * 0.2);
+    float f = pow(float(i), 2.0) + _T * (1.0 + float(i) * 0.2);
     vec3 p1 = p + vec3(sin(f * 0.5), cos(f * 0.4), sin(f * 0.3)) * 0.5;
     float s = sphere(p1 / size) * size;
-    dist = smUnion(dist, s, 0.3 + sin(vTime) * 0.3);
+    dist = smUnion(dist, s, 0.3 + sin(_T) * 0.3);
   }
   float distort = sin(20.0 * p.x) * sin(20.0 * p.y) * sin(20.0 * p.z);
-  return result(dist + distort * (0.05 + 0.04 * sin(vTime * 0.3)), MATERIAL_BALLS);
+  return result(dist + distort * (0.05 + 0.04 * sin(_T * 0.3)), MATERIAL_BALLS);
 }
 
 vec4 render(vec3 p) {
-  vec3 p1 = rotateY(p, vTime);
+  vec3 p1 = rotateY(p, _T);
 
   vec4 env = envUnion(p1);
 
-  float logoDisplacement = sin(30.0 * p1.x + 27.0 * p1.y + 250.0 * p1.z) + sin(30.0 * p.y + 10.0 * vTime);
-  vec4 displacedLogo = logo(p1) + displace(logoDisplacement * sin(vTime) * 0.005);
+  float logoDisplacement = sin(30.0 * p1.x + 27.0 * p1.y + 250.0 * p1.z) + sin(30.0 * p.y + 10.0 * _T);
+  vec4 displacedLogo = logo(p1) + displace(logoDisplacement * sin(_T) * 0.005);
 
   vec4 balls = metaBalls(p1);
 
-  return opRUnion(env, mod(vTime, 2.0) < 1.0 ? displacedLogo : balls);
+  return opRUnion(env, mod(_T, 2.0) < 1.0 ? displacedLogo : balls);
 }
 
 vec4 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, float end) {
@@ -228,14 +232,14 @@ vec3 phongContribForLight(vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye, vec
 vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye) {
   const vec3 ambientLight = 0.1 * vec3(1.0, 1.0, 1.0);
   vec3 color = ambientLight * k_a;
-  float y = sin(vTime * 2.0) * 4.0;
+  float y = sin(_T * 2.0) * 4.0;
 
-  vec3 light1Pos = vec3(3.0 * cos(vTime * 0.2), 0.0, 3.0 * sin(vTime * 0.2));
+  vec3 light1Pos = vec3(3.0 * cos(_T * 0.2), 0.0, 3.0 * sin(_T * 0.2));
   vec3 light1Intensity = vec3(0.4, 0.4, 0.4);
 
   color += phongContribForLight(k_d, k_s, alpha, p, eye, light1Pos, light1Intensity);
 
-  vec3 light2Pos = vec3(3.0 * sin(0.37 * vTime), y, 3.0 * cos(0.37 * vTime));
+  vec3 light2Pos = vec3(3.0 * sin(0.37 * _T), y, 3.0 * cos(0.37 * _T));
   vec3 light2Intensity = vec3(0.4, 0.4, 0.4);
 
   color += phongContribForLight(k_d, k_s, alpha, p, eye, light2Pos, light2Intensity);
@@ -243,32 +247,32 @@ vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 e
 }
 
 vec3 postProcess(vec3 color) {
-  float maxDist = length(vResolution.xy) / 2.0;
-  float strength = pow(length(gl_FragCoord.xy - vResolution.xy / 2.0) / maxDist, 5.0);
-  strength *= 0.6 + 0.6 * sin(gl_FragCoord.y * 2.0 + vTime * 5.0); // scanlines
+  float maxDist = length(_R.xy) / 2.0;
+  float strength = pow(length(gl_FragCoord.xy - _R.xy / 2.0) / maxDist, 5.0);
+  strength *= 0.6 + 0.6 * sin(gl_FragCoord.y * 2.0 + _T * 5.0); // scanlines
 
   return color * (1.3 - strength);
 }
 
 vec3 envVignette(vec3 color) {
-  float maxDist = length(vResolution.xy) / 2.0;
-  float strength = pow(length(gl_FragCoord.xy - vResolution.xy / 2.0) / maxDist, 2.0);
+  float maxDist = length(_R.xy) / 2.0;
+  float strength = pow(length(gl_FragCoord.xy - _R.xy / 2.0) / maxDist, 2.0);
   return color * (0.5 + 0.5 * strength);
 }
 
 vec3 calcEnvMaterial(vec3 p, vec3 eye, int material) {
   if (material == MATERIAL_ENV) {
     vec3 K_a = vec3(0.0, 0.15, 0.2);
-    vec3 K_d = vec3(0.0, 0.2 + sin(vTime) * 0.2, 0.7);
-    vec3 K_s = vec3(0.5, 1.0, 0.8 + sin(vTime * 0.5) * 0.1);
-    float shininess = 50.0 + sin(vTime * 16.0) * 40.0;
+    vec3 K_d = vec3(0.0, 0.2 + sin(_T) * 0.2, 0.7);
+    vec3 K_s = vec3(0.5, 1.0, 0.8 + sin(_T * 0.5) * 0.1);
+    float shininess = 50.0 + sin(_T * 16.0) * 40.0;
     return phongIllumination(K_a, K_d, K_s, shininess, p, eye);
   }
 
   vec3 K_a = vec3(0.0, 0.0, 0.5);
   vec3 K_d = vec3(1.0, 0.0, 0.0);
   vec3 K_s = vec3(1.0, 1.0, 1.0);
-  float shininess = 150.0 + sin(vTime * 16.0) * 40.0;
+  float shininess = 150.0 + sin(_T * 16.0) * 40.0;
   return phongIllumination(K_a, K_d, K_s, shininess, p, eye);
 }
 
@@ -302,8 +306,8 @@ vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, int material) {
 }
 
 void main() {
-  vec3 viewDir = rayDirection(90.0 + sin(floor(vTime) * 1000.0) * 60.0, vResolution.xy, gl_FragCoord.xy);
-  vec3 eye = vec3(3.0 * cos(vTime * 0.2), 0.0, 3.0 * sin(vTime * 0.2));
+  vec3 viewDir = rayDirection(90.0 + sin(floor(_T) * 1000.0) * 60.0, _R.xy, gl_FragCoord.xy);
+  vec3 eye = vec3(3.0 * cos(_T * 0.2), 0.0, 3.0 * sin(_T * 0.2));
 
   mat4 viewToWorld = viewMatrix(eye, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
 
@@ -315,12 +319,12 @@ void main() {
 
   if (dist > MAX_DIST - EPSILON) {
     // Didn't hit anything
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    _C = vec4(0.0, 0.0, 0.0, 1.0);
     return;
   }
 
   vec3 p = eye + dist * worldDir;
   vec3 color = calcMaterial(p, eye, worldDir, int(material));
 
-  gl_FragColor = vec4(postProcess(color), 1.0);
+  _C = vec4(postProcess(color), 1.0);
 }

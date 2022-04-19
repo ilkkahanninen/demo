@@ -1,12 +1,15 @@
 import { initShader } from "../webgl";
-import fragShader from "./scene.frag";
 import vertShader from "./scene.vert";
+
+const fragShader = require(process.env.NODE_ENV !== "production"
+  ? "./scene.frag"
+  : "../../dist/intermediate/out.min.frag");
 
 export type SceneInfo = {
   program: WebGLProgram;
-  aVertexPosition: number;
-  uResolution: WebGLUniformLocation | null;
-  uTime: WebGLUniformLocation | null;
+  vertexPosition: number;
+  resolution: WebGLUniformLocation | null;
+  time: WebGLUniformLocation | null;
 };
 
 export function load(gl: WebGLRenderingContext): SceneInfo {
@@ -14,8 +17,8 @@ export function load(gl: WebGLRenderingContext): SceneInfo {
 
   return {
     program,
-    aVertexPosition: gl.getAttribLocation(program, "aVertexPosition"),
-    uResolution: gl.getUniformLocation(program, "uResolution"),
-    uTime: gl.getUniformLocation(program, "uTime"),
+    vertexPosition: gl.getAttribLocation(program, "_V"),
+    resolution: gl.getUniformLocation(program, "_R"),
+    time: gl.getUniformLocation(program, "_T"),
   };
 }

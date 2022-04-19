@@ -1,5 +1,3 @@
-precision highp float;
-
 /**
  * Signed distance function for a sphere centered at the origin with radius 1.0;
  */

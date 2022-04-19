@@ -1,13 +1,7 @@
-attribute vec4 aVertexPosition;
+#version 300 es
 
-uniform vec2 uResolution;
-uniform float uTime;
-
-varying lowp vec2 vResolution;
-varying lowp float vTime;
+in vec4 _V;
 
 void main() {
-    gl_Position = aVertexPosition;
-    vResolution = uResolution;
-    vTime = uTime;
+    gl_Position = _V;
 }

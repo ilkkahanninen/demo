@@ -118,8 +118,8 @@ const toTriggerTimes =
   (triggers: boolean[]): number[] =>
     triggers.flatMap((trigger, index) => (trigger ? [index * stepLength] : []));
 
-console.log(
-  euclidean(4, 32)
-    .map((n) => (n ? "x" : "."))
-    .join("")
-);
+// console.log(
+//   euclidean(4, 32)
+//     .map((n) => (n ? "x" : "."))
+//     .join("")
+// );
