@@ -22,11 +22,13 @@ export function initShader(
   gl.attachShader(shaderProgram, fragmentShader);
   gl.linkProgram(shaderProgram);
 
-  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    throw (
-      "Unable to initialize the shader program: " +
-      gl.getProgramInfoLog(shaderProgram)
-    );
+  if (process.env.NODE_ENV !== "production") {
+    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+      throw (
+        "Unable to initialize the shader program: " +
+        gl.getProgramInfoLog(shaderProgram)
+      );
+    }
   }
 
   return shaderProgram;

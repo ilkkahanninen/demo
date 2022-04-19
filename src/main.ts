@@ -27,11 +27,11 @@ window.onload = () => {
     const time = now() - startTime;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.vertexAttribPointer(scene.vertexPosition, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(scene.vertexPosition);
-    gl.useProgram(scene.program);
-    gl.uniform2fv(scene.resolution, config.resolution);
-    gl.uniform1f(scene.time, time);
+    gl.vertexAttribPointer(scene.v, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(scene.v);
+    gl.useProgram(scene.p);
+    gl.uniform2fv(scene.r, config.resolution);
+    gl.uniform1f(scene.t, time);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
     requestAnimationFrame(renderNext);

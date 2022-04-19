@@ -73,11 +73,11 @@ vec4 environment(vec3 p) {
   const float f = 8.0;
   const float size = 5.0;
   float s = sphere(p / size) * size;
-  float distort = sin(p.x * 5.0) * sin(p.y * 2.0) * sin(p.z * f);
+  float distort = sin(p.x * size) * sin(p.y * 2.0) * sin(p.z * f);
   return result(-s + distort * 0.1, MATERIAL_ENV);
 }
 
-vec3 opRep(in vec3 p, in vec3 c) {
+vec3 opRep(vec3 p, vec3 c) {
   return mod(p + 0.5 * c, c) - 0.5 * c;
 }
 
