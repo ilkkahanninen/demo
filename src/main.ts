@@ -37,14 +37,18 @@ const fragShader = require(process.env.NODE_ENV !== "production"
     gl.vertexAttribPointer(vertexPos, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vertexPos);
     gl.useProgram(program);
-    gl.uniform1f(timeUniform, time * 0.001);
+    gl.uniform1f(timeUniform, time * 0.001 * (0.25 / 0.2));
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
     requestAnimationFrame(renderNext);
   };
-  requestAnimationFrame(renderNext);
 
-  document.body.addEventListener("click", () => {
-    play();
+  let playing = false;
+  window.addEventListener("click", () => {
+    if (!playing) {
+      play();
+      requestAnimationFrame(renderNext);
+      playing = true;
+    }
   });
 })();
