@@ -254,12 +254,6 @@ vec3 postProcess(vec3 color) {
   return color * (1.3 - strength);
 }
 
-vec3 envVignette(vec3 color) {
-  float maxDist = length(RESOLUTION.xy) / 2.0;
-  float strength = pow(length(gl_FragCoord.xy - RESOLUTION.xy / 2.0) / maxDist, 2.0);
-  return color * (0.5 + 0.5 * strength);
-}
-
 vec3 calcEnvMaterial(vec3 p, vec3 eye, int material) {
   if (material == MATERIAL_ENV) {
     vec3 K_a = vec3(0.0, 0.15, 0.2);

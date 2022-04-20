@@ -1,4 +1,4 @@
-export function play() {
+export const play = () => {
   const ctx = new AudioContext();
 
   const osc = ctx.createOscillator();
@@ -101,7 +101,7 @@ export function play() {
   bassLead.connect(bassLeadFilter).connect(bassLeadVCA).connect(compressor);
   compressor.connect(compGain).connect(compressor2).connect(ctx.destination);
 
-  function scheduleNote(step: number, time: number) {
+  const scheduleNote = (step: number, time: number) => {
     const currentTime = ctx.currentTime + time;
 
     kickOsc.frequency.setValueCurveAtTime([110, 40, 10, 55], currentTime, 0.2);
@@ -162,26 +162,26 @@ export function play() {
         0.2
       );
     }
-  }
+  };
 
   const lookahead = 1;
   const scheduleAheadTime = 0.1;
   let currentNote = 0;
   let nextNoteTime = 0;
 
-  function nextNote() {
+  const nextNote = () => {
     nextNoteTime += 0.2;
     currentNote = (currentNote + 1) % 32;
-  }
+  };
 
-  function scheduler() {
+  const scheduler = () => {
     while (nextNoteTime < ctx.currentTime + scheduleAheadTime) {
       scheduleNote(currentNote, nextNoteTime);
       nextNote();
     }
     setTimeout(scheduler, lookahead);
-  }
+  };
 
   nextNoteTime = ctx.currentTime;
   scheduler();
-}
+};

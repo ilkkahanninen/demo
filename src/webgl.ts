@@ -1,8 +1,8 @@
-export function initShader(
+export const initShader = (
   gl: WebGLRenderingContext,
   vsSource: string,
   fsSource: string
-): WebGLProgram {
+): WebGLProgram => {
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
   const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
@@ -21,13 +21,13 @@ export function initShader(
   }
 
   return shaderProgram;
-}
+};
 
-export function loadShader(
+export const loadShader = (
   gl: WebGLRenderingContext,
   type: GLenum,
   source: string
-): WebGLShader {
+): WebGLShader => {
   const shader = gl.createShader(type)!;
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
@@ -49,4 +49,4 @@ export function loadShader(
   }
 
   return shader;
-}
+};
