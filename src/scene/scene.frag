@@ -26,7 +26,7 @@ const float EPSILON = 0.00001;
 const float STEP_CORRECTION = 0.9; // lower -> better quality, but slower
 const float PI = 3.1415;
 
-uniform vec2 _R;
+const vec2 RESOLUTION = vec2(1280, 720);
 uniform float _T;
 out vec4 _C;
 
@@ -247,16 +247,16 @@ vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 e
 }
 
 vec3 postProcess(vec3 color) {
-  float maxDist = length(_R.xy) / 2.0;
-  float strength = pow(length(gl_FragCoord.xy - _R.xy / 2.0) / maxDist, 5.0);
+  float maxDist = length(RESOLUTION.xy) / 2.0;
+  float strength = pow(length(gl_FragCoord.xy - RESOLUTION.xy / 2.0) / maxDist, 5.0);
   strength *= 0.6 + 0.6 * sin(gl_FragCoord.y * 2.0 + _T * 5.0); // scanlines
 
   return color * (1.3 - strength);
 }
 
 vec3 envVignette(vec3 color) {
-  float maxDist = length(_R.xy) / 2.0;
-  float strength = pow(length(gl_FragCoord.xy - _R.xy / 2.0) / maxDist, 2.0);
+  float maxDist = length(RESOLUTION.xy) / 2.0;
+  float strength = pow(length(gl_FragCoord.xy - RESOLUTION.xy / 2.0) / maxDist, 2.0);
   return color * (0.5 + 0.5 * strength);
 }
 
@@ -306,7 +306,7 @@ vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, int material) {
 }
 
 void main() {
-  vec3 viewDir = rayDirection(90.0 + sin(floor(_T) * 1000.0) * 60.0, _R.xy, gl_FragCoord.xy);
+  vec3 viewDir = rayDirection(90.0 + sin(floor(_T) * 1000.0) * 60.0, RESOLUTION.xy, gl_FragCoord.xy);
   vec3 eye = vec3(3.0 * cos(_T * 0.2), 0.0, 3.0 * sin(_T * 0.2));
 
   mat4 viewToWorld = viewMatrix(eye, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));

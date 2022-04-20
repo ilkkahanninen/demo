@@ -10,7 +10,6 @@ const fragShader = require(process.env.NODE_ENV !== "production"
 export type SceneInfo = {
   p: WebGLProgram; // shader program
   v: number; // vertex positions
-  r: WebGLUniformLocation | null; // resolution
   t: WebGLUniformLocation | null; // time
 };
 
@@ -20,7 +19,6 @@ export function load(gl: WebGLRenderingContext): SceneInfo {
   return {
     p: program,
     v: gl.getAttribLocation(program, "_V"),
-    r: gl.getUniformLocation(program, "_R"),
     t: gl.getUniformLocation(program, "_T"),
   };
 }

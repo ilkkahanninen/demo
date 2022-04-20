@@ -1,12 +1,18 @@
-import { config } from "./config";
-import { initMusic } from "./music2";
-import { load } from "./scene/scene";
-import { initBuffer } from "./webgl";
+import { play } from "./music";
+import { initShader } from "./webgl";
 
-window.onload = () => {
+const vertShader = require(process.env.NODE_ENV !== "production"
+  ? "./scene/scene.vert"
+  : "../dist/intermediate/out.min.vert");
+
+const fragShader = require(process.env.NODE_ENV !== "production"
+  ? "./scene/scene.frag"
+  : "../dist/intermediate/out.min.frag");
+
+(() => {
   const canvas = document.querySelector<HTMLCanvasElement>("#c")!;
-  canvas.width = config.resolution[0];
-  canvas.height = config.resolution[1];
+  canvas.width = 1280;
+  canvas.height = 720;
 
   const gl = canvas.getContext("webgl2")!;
   if (process.env.NODE_ENV !== "production") {
@@ -17,29 +23,28 @@ window.onload = () => {
     }
   }
 
-  const buffer = initBuffer(gl);
-  const scene = load(gl);
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  const positions = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
-  const now = (): number => new Date().getTime() / 1000;
+  const program = initShader(gl, vertShader, fragShader);
+  const vertexPos = gl.getAttribLocation(program, "_V");
+  const timeUniform = gl.getUniformLocation(program, "_T");
 
-  const startTime = now();
-  const renderNext = () => {
-    const time = now() - startTime;
-
+  const renderNext = (time: DOMHighResTimeStamp) => {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.vertexAttribPointer(scene.v, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(scene.v);
-    gl.useProgram(scene.p);
-    gl.uniform2fv(scene.r, config.resolution);
-    gl.uniform1f(scene.t, time);
+    gl.vertexAttribPointer(vertexPos, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vertexPos);
+    gl.useProgram(program);
+    gl.uniform1f(timeUniform, time * 0.001);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
     requestAnimationFrame(renderNext);
   };
-
-  renderNext();
+  requestAnimationFrame(renderNext);
 
   document.body.addEventListener("click", () => {
-    initMusic();
+    play();
   });
-};
+})();
