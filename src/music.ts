@@ -55,12 +55,12 @@ export const play = () => {
     output[i] = Math.random() * 2 - 1;
   }
 
-  const whiteNoise = ctx.createBufferSource();
-  whiteNoise.buffer = noiseBuffer;
-  whiteNoise.loop = true;
-  whiteNoise.start();
-  const whiteNoiseVCA = ctx.createGain();
-  whiteNoiseVCA.gain.value = 0;
+  // const whiteNoise = ctx.createBufferSource();
+  // whiteNoise.buffer = noiseBuffer;
+  // whiteNoise.loop = true;
+  // whiteNoise.start();
+  // const whiteNoiseVCA = ctx.createGain();
+  // whiteNoiseVCA.gain.value = 0;
 
   const bassLead = ctx.createOscillator();
   bassLead.type = "sawtooth";
@@ -74,19 +74,19 @@ export const play = () => {
   bassLeadVCA.gain.value = 0.2;
 
   const compressor = ctx.createDynamicsCompressor();
-  compressor.attack.value = 0.1;
-  compressor.release.value = 0.2;
+  compressor.attack.value = 0.01;
+  compressor.release.value = 0.4;
   compressor.knee.value = 0;
-  compressor.ratio.value = 3.0;
+  compressor.ratio.value = 99.0;
 
-  const compGain = ctx.createGain();
-  compGain.gain.value = 2.0;
+  // const compGain = ctx.createGain();
+  // compGain.gain.value = 2.0;
 
-  const compressor2 = ctx.createDynamicsCompressor();
-  compressor.attack.value = 0.02;
-  compressor.release.value = 0.3;
-  compressor.knee.value = 0.2;
-  compressor.ratio.value = 4.0;
+  // const compressor2 = ctx.createDynamicsCompressor();
+  // compressor.attack.value = 0.02;
+  // compressor.release.value = 0.3;
+  // compressor.knee.value = 0.2;
+  // compressor.ratio.value = 4.0;
 
   osc2.connect(fmFreq).connect(osc.frequency);
   osc.connect(velocity).connect(fmSynthFilter).connect(compressor);
@@ -94,12 +94,13 @@ export const play = () => {
   delayAttenuator.connect(delay);
   kickOsc.connect(kickVCA).connect(kickFilter).connect(compressor);
   hhGain.connect(compressor);
-  whiteNoise.connect(hhGain);
-  whiteNoise.connect(whiteNoiseVCA);
-  whiteNoiseVCA.connect(compressor);
-  whiteNoiseVCA.connect(delay);
+  // whiteNoise.connect(hhGain);
+  // whiteNoise.connect(whiteNoiseVCA);
+  // whiteNoiseVCA.connect(compressor);
+  // whiteNoiseVCA.connect(delay);
   bassLead.connect(bassLeadFilter).connect(bassLeadVCA).connect(compressor);
-  compressor.connect(compGain).connect(compressor2).connect(ctx.destination);
+  compressor /*.connect(compGain).connect(compressor2)*/
+    .connect(ctx.destination);
 
   const scheduleNote = (step: number, time: number) => {
     const currentTime = ctx.currentTime + time;
@@ -112,7 +113,6 @@ export const play = () => {
       25.5 * Math.pow(2, step % 4),
       currentTime
     );
-    osc.type = "sine";
     osc2.frequency.exponentialRampToValueAtTime(
       55.5 * Math.pow(2, step % 3),
       currentTime
@@ -127,13 +127,13 @@ export const play = () => {
     hhGain.gain.setValueCurveAtTime([0.008, 0], currentTime + 0.2, 0.02);
     hhGain.gain.setValueCurveAtTime([0.006, 0], currentTime + 0.3, 0.01);
 
-    if (step % 4 == 1) {
-      whiteNoiseVCA.gain.setValueCurveAtTime(
-        [0.01, 0.001, 0, 0.01, 0],
-        currentTime + 0.2,
-        0.4
-      );
-    }
+    // if (step % 4 == 1) {
+    //   whiteNoiseVCA.gain.setValueCurveAtTime(
+    //     [0.01, 0.001, 0, 0.01, 0],
+    //     currentTime + 0.2,
+    //     0.4
+    //   );
+    // }
 
     bassLead.frequency.exponentialRampToValueAtTime(
       55 + (step % 4) + (step % 3 == 1 ? 8 : 0),
@@ -152,8 +152,9 @@ export const play = () => {
 
     velocity.gain.setValueCurveAtTime([0.2, 0, 0.1, 0], currentTime, 0.2);
 
+    // osc.type = "sine";
     if (step % 2 == 0) {
-      osc.type = "triangle";
+      // osc.type = "triangle";
       fmFreq.gain.setValueCurveAtTime([880.0, 25.5], currentTime, 0.2);
     } else if (step % 4 == 0) {
       fmFreq.gain.setValueCurveAtTime(

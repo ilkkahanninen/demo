@@ -1,4 +1,4 @@
-vec4 opRUnion(vec4 a, vec4 b) {
+vec2 opRUnion(vec2 a, vec2 b) {
     return a.x < b.x ? a : b;
 }
 
