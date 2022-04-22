@@ -54,20 +54,21 @@ if (process.env.NODE_ENV !== "production") {
 
 let vertexPos = gl.getAttribLocation(program, "_V");
 let timeUniform = gl.getUniformLocation(program, "_T");
-let audioCtx: AudioContext | undefined;
+let player: AudioContext | undefined;
 
 let renderNext = () => {
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.vertexAttribPointer(vertexPos, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(vertexPos);
   gl.useProgram(program);
-  gl.uniform1f(timeUniform, audioCtx!.currentTime / 0.4);
+  gl.uniform1f(timeUniform, player!.currentTime / 0.4);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
   requestAnimationFrame(renderNext);
 };
 
 window.onclick = () => {
-  audioCtx = play();
+  player = play();
   requestAnimationFrame(renderNext);
+  window.onclick = null;
 };

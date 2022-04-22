@@ -79,18 +79,18 @@ vec2 environment2(vec3 p0) {
   const float i_size = 4.0;
   float i_s = sphere(p / i_size) * i_size;
 
-  float size2 = 1.3 + 0.2 * mod(_T, 1.0);
+  float size2 = 1.3 + mod(_T, 1.0) * 0.2;
   vec3 i_c = vec3(2.0, 2.0, 2.0);
-  float i_s2 = sphere((mod(p + 0.5 * i_c, i_c) - 0.5 * i_c) / size2) * size2;
+  float i_s2 = sphere((mod(p + i_c * 0.5, i_c) - i_c * 0.5) / size2) * size2;
 
   float i_f = 8.0 * length(p);
   float i_distort = sin(sin(p.x * i_f) * sin(p.y * i_f) * sin(p.z * i_f));
 
-  return vec2(opDiff(i_s, i_s2) + 0.01 * i_distort, MATERIAL_ENV2);
+  return vec2(opDiff(i_s, i_s2) + i_distort * 0.01, MATERIAL_ENV2);
 }
 
 vec2 envUnion(vec3 p) {
-  if (_T >= 96.0 && _T < 128.0)
+  if (_T >= 96.0 && _T < 128.0 || _T >= 192.0 && _T < 224.0)
     return environment(p);
   return opRUnion(environment(p), environment2(p));
 }
@@ -104,43 +104,39 @@ vec2 metaBalls(vec3 p) {
     float i_s = sphere(i_p1 / i_size) * i_size;
     dist = smUnion(dist, i_s, 0.3 + sin(_T) * 0.3);
   }
-  float i_distort = sin(20.0 * p.x) * sin(20.0 * p.y) * sin(20.0 * p.z);
-  return vec2(dist + (_T < 160.0 ? 0.0 : i_distort * (0.05 + 0.04 * sin(_T * 0.3))), MATERIAL_BALLS);
+  float i_distort = sin(p.x * 20.0) * sin(p.y * 20.0) * sin(p.z * 20.0);
+  return vec2(dist + (_T < 160.0 ? 0.0 : i_distort * (0.05 + sin(_T * 0.3) * 0.04)), MATERIAL_BALLS);
 }
 
 vec2 render(vec3 p) {
-  vec3 p1 = rotateY(p, _T * 0.1 * floor(_T / 32.0));
+  vec3 p1 = rotateY(p, _T * floor(_T / 32.0) * 0.1);
 
   vec2 i_env = envUnion(p1);
   vec2 i_plainEnv = environment(p);
-  float i_logoDisplacement = sin(30.0 * p1.x + 27.0 * p1.y + 250.0 * p1.z) + sin(30.0 * p.y + 10.0 * _T);
+  float i_logoDisplacement = sin(p1.x * 30.0 + p1.y * 27.0 + p1.z * 250.0) + sin(p.y * 30.0 + _T * 10.0);
   vec2 i_displacedLogo = logo(p1) + vec2(i_logoDisplacement * sin(_T) * 0.005, 0.0);
 
   vec2 i_balls = metaBalls(p1);
 
-  float i_cubeSize = (_T - 32.0) / 32.0;
-  vec2 i_cube = vec2(cube(rotateX(p1, _T * 0.2), vec3(i_cubeSize, i_cubeSize, i_cubeSize)), MATERIAL_BALLS);
-
-  if (_T < 32.0)
+  float part = floor(_T / 32.0);
+  if (part < 2.)
     return i_plainEnv;
-  if (_T < 64.0)
-    return opRUnion(i_plainEnv, i_cube);
-  if (_T < 96.0)
+  if (part < 3.)
     return i_env;
-  if (_T < 128.0)
+  if (part < 4.)
     return opRUnion(i_plainEnv, i_balls);
-  if (_T < 160.0)
+  if (part < 5.)
     return opRUnion(i_env, i_balls);
-  if (_T < 192.0)
+  if (part < 6.)
     return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_displacedLogo : i_balls);
-  if (_T < 224.0)
-    return opRUnion(i_plainEnv, i_displacedLogo);
-  if (_T < 256.0)
+  if (part < 7.)
+    return opRUnion(i_plainEnv, i_balls);
+  if (part < 8.)
     return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_displacedLogo : i_balls);
 }
 
-vec2 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, float end, bool envOnly) {
-  float depth = start;
+vec2 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, bool envOnly) {
+  float depth = i_MIN_DIST;
   for (int i = 0; i < i_MAX_MARCHING_STEPS; i++) {
     vec3 i_p = eye + depth * marchingDirection;
     vec2 r = envOnly ? envUnion(i_p) : render(i_p);
@@ -150,12 +146,12 @@ vec2 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, fl
       return r;
     }
     depth += i_dist * i_STEP_CORRECTION;
-    if (depth >= end) {
-      r.x = end;
-      return r;
-    }
+    // if (depth >= end) {
+    //   r.x = end;
+    //   return r;
+    // }
   }
-  return vec2(end, -1);
+  // return vec2(end, -1);
 }
 
 /**
@@ -217,25 +213,25 @@ vec3 phongContribForLight(vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye, vec
  * See https://en.wikipedia.org/wiki/Phong_reflection_model#Description
  */
 vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye) {
-  const vec3 ambientLight = 0.1 * vec3(1.0, 1.0, 1.0);
-  vec3 i_ambientColor = ambientLight * k_a;
+  // const vec3 ambientLight = vec3(0.1, 0.1, 0.1);
+  // vec3 i_ambientColor = ambientLight * k_a;
   float i_y = sin(_T) * 4.0;
 
   vec3 i_light1Pos = vec3(3.0 * cos(_T * 0.2), 0.0, 3.0 * sin(_T * 0.2));
   vec3 i_light1Intensity = vec3(0.4, 0.4, 0.4);
   vec3 i_light1 = phongContribForLight(k_d, k_s, alpha, p, eye, i_light1Pos, i_light1Intensity);
 
-  vec3 i_light2Pos = vec3(3.0 * sin(0.37 * _T), i_y, 3.0 * cos(0.37 * _T));
+  vec3 i_light2Pos = vec3(3.0 * sin(_T * 0.37), i_y, 3.0 * cos(_T * 0.37));
   vec3 i_light2Intensity = vec3(0.4, 0.4, 0.4);
   vec3 i_light2 = phongContribForLight(k_d, k_s, alpha, p, eye, i_light2Pos, i_light2Intensity);
 
-  return i_ambientColor + i_light1 + i_light2;
+  return /*i_ambientColor +*/ i_light1 + i_light2;
 }
 
 vec3 postProcess(vec3 color) {
   float i_maxDist = length(RESOLUTION.xy) / 2.0;
   float i_scanlineDensity = 1.1 + sin(floor(_T));
-  float i_scanline = (0.6 + 0.6 * sin(gl_FragCoord.y * i_scanlineDensity + _T * 5.0));
+  float i_scanline = (0.6 + sin(gl_FragCoord.y * i_scanlineDensity + _T * 5.0) * 0.6);
   float i_strength = (pow(length(gl_FragCoord.xy - RESOLUTION.xy / 2.0) / i_maxDist, 5.0)) * i_scanline;
   return color * (1.3 - i_strength);
 }
@@ -264,7 +260,7 @@ vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, int material) {
   } else if (material == MATERIAL_BALLS) {
     vec3 n = estimateNormal(p);
     vec3 i_reflectionDir = reflect(worldDir, n);
-    vec2 i_rEnv = shortestDistanceToSurface(p, i_reflectionDir, i_MIN_DIST, i_MAX_DIST, true);
+    vec2 i_rEnv = shortestDistanceToSurface(p, i_reflectionDir, true);
 
     vec3 i_reflectionColor = calcEnvMaterial(p + i_rEnv.x * i_reflectionDir, p, int(i_rEnv.y));
 
@@ -296,7 +292,7 @@ void main() {
 
   vec3 worldDir = (i_viewToWorld * vec4(viewDir, 0.0)).xyz;
 
-  vec2 r = shortestDistanceToSurface(i_eye, worldDir, i_MIN_DIST, i_MAX_DIST, false);
+  vec2 r = shortestDistanceToSurface(i_eye, worldDir, false);
   float i_dist = r.x;
   float i_material = r.y;
 
