@@ -20,7 +20,7 @@ mono tools/shader_minifier.exe dist/intermediate/out.clean.vert -o dist/intermed
 
 echo Bundle app...
 
-./node_modules/.bin/parcel build src/main.ts --no-cache --no-source-maps --no-content-hash --dist-dir dist/intermediate
+./node_modules/.bin/parcel build src/main.ts --no-cache --no-source-maps --dist-dir dist/intermediate
 
 echo Compress app...
 
@@ -28,7 +28,7 @@ echo Compress app...
 
 echo Concat app to a minimal html...
 
-echo '<style>body{margin:0;display:flex;align-items:center;height:100vh} #c{width:100%}</style><canvas id="c"></canvas><script>' > dist/index.html
+echo '<canvas></canvas><script>' > dist/index.html
 cat dist/intermediate/main.min.js >> dist/index.html
 echo '</script>' >> dist/index.html
 

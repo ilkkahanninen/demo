@@ -1,39 +1,14 @@
-export const initShader = (
-  gl: WebGLRenderingContext,
-  vsSource: string,
-  fsSource: string
-): WebGLProgram => {
-  const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-  const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
-
-  const shaderProgram = gl.createProgram()!;
-  gl.attachShader(shaderProgram, vertexShader);
-  gl.attachShader(shaderProgram, fragmentShader);
-  gl.linkProgram(shaderProgram);
-
-  if (process.env.NODE_ENV !== "production") {
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-      throw (
-        "Unable to initialize the shader program: " +
-        gl.getProgramInfoLog(shaderProgram)
-      );
-    }
-  }
-
-  return shaderProgram;
-};
-
-export const loadShader = (
+export let loadShader = (
   gl: WebGLRenderingContext,
   type: GLenum,
   source: string
 ): WebGLShader => {
-  const shader = gl.createShader(type)!;
+  let shader = gl.createShader(type)!;
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
 
   if (process.env.NODE_ENV !== "production") {
-    const info = gl.getShaderInfoLog(shader);
+    let info = gl.getShaderInfoLog(shader);
 
     if (info?.length) {
       gl.deleteShader(shader);

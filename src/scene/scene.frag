@@ -90,6 +90,8 @@ vec2 environment2(vec3 p0) {
 }
 
 vec2 envUnion(vec3 p) {
+  if (_T >= 96.0 && _T < 128.0)
+    return environment(p);
   return opRUnion(environment(p), environment2(p));
 }
 
@@ -103,20 +105,38 @@ vec2 metaBalls(vec3 p) {
     dist = smUnion(dist, i_s, 0.3 + sin(_T) * 0.3);
   }
   float i_distort = sin(20.0 * p.x) * sin(20.0 * p.y) * sin(20.0 * p.z);
-  return vec2(dist + i_distort * (0.05 + 0.04 * sin(_T * 0.3)), MATERIAL_BALLS);
+  return vec2(dist + (_T < 160.0 ? 0.0 : i_distort * (0.05 + 0.04 * sin(_T * 0.3))), MATERIAL_BALLS);
 }
 
 vec2 render(vec3 p) {
-  vec3 p1 = rotateY(p, _T);
+  vec3 p1 = rotateY(p, _T * 0.1 * floor(_T / 32.0));
 
   vec2 i_env = envUnion(p1);
-
+  vec2 i_plainEnv = environment(p);
   float i_logoDisplacement = sin(30.0 * p1.x + 27.0 * p1.y + 250.0 * p1.z) + sin(30.0 * p.y + 10.0 * _T);
   vec2 i_displacedLogo = logo(p1) + vec2(i_logoDisplacement * sin(_T) * 0.005, 0.0);
 
   vec2 i_balls = metaBalls(p1);
 
-  return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_displacedLogo : i_balls);
+  float i_cubeSize = (_T - 32.0) / 32.0;
+  vec2 i_cube = vec2(cube(rotateX(p1, _T * 0.2), vec3(i_cubeSize, i_cubeSize, i_cubeSize)), MATERIAL_BALLS);
+
+  if (_T < 32.0)
+    return i_plainEnv;
+  if (_T < 64.0)
+    return opRUnion(i_plainEnv, i_cube);
+  if (_T < 96.0)
+    return i_env;
+  if (_T < 128.0)
+    return opRUnion(i_plainEnv, i_balls);
+  if (_T < 160.0)
+    return opRUnion(i_env, i_balls);
+  if (_T < 192.0)
+    return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_displacedLogo : i_balls);
+  if (_T < 224.0)
+    return opRUnion(i_plainEnv, i_displacedLogo);
+  if (_T < 256.0)
+    return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_displacedLogo : i_balls);
 }
 
 vec2 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, float start, float end, bool envOnly) {
@@ -199,7 +219,7 @@ vec3 phongContribForLight(vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye, vec
 vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye) {
   const vec3 ambientLight = 0.1 * vec3(1.0, 1.0, 1.0);
   vec3 i_ambientColor = ambientLight * k_a;
-  float i_y = sin(_T * 2.0) * 4.0;
+  float i_y = sin(_T) * 4.0;
 
   vec3 i_light1Pos = vec3(3.0 * cos(_T * 0.2), 0.0, 3.0 * sin(_T * 0.2));
   vec3 i_light1Intensity = vec3(0.4, 0.4, 0.4);
@@ -214,7 +234,9 @@ vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 e
 
 vec3 postProcess(vec3 color) {
   float i_maxDist = length(RESOLUTION.xy) / 2.0;
-  float i_strength = (pow(length(gl_FragCoord.xy - RESOLUTION.xy / 2.0) / i_maxDist, 5.0)) * (0.6 + 0.6 * sin(gl_FragCoord.y * 2.0 + _T * 5.0));
+  float i_scanlineDensity = 1.1 + sin(floor(_T));
+  float i_scanline = (0.6 + 0.6 * sin(gl_FragCoord.y * i_scanlineDensity + _T * 5.0));
+  float i_strength = (pow(length(gl_FragCoord.xy - RESOLUTION.xy / 2.0) / i_maxDist, 5.0)) * i_scanline;
   return color * (1.3 - i_strength);
 }
 
@@ -223,7 +245,7 @@ vec3 calcEnvMaterial(vec3 p, vec3 eye, int material) {
     vec3 i_K_a = vec3(0.0, 0.15, 0.2);
     vec3 i_K_d = vec3(0.0, 0.2 + sin(_T) * 0.2, 0.7);
     vec3 i_K_s = vec3(0.5, 1.0, 0.8 + sin(_T * 0.5) * 0.1);
-    float i_shininess = 50.0 + sin(_T * 16.0) * 40.0;
+    float i_shininess = 50.0 + cos(_T * i_PI) * 40.0;
     return phongIllumination(i_K_a, i_K_d, i_K_s, i_shininess, p, eye);
   }
 
@@ -265,14 +287,16 @@ vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, int material) {
 }
 
 void main() {
-  vec3 viewDir = rayDirection(90.0 + sin(floor(_T) * 1000.0) * 60.0, RESOLUTION.xy, gl_FragCoord.xy);
-  vec3 eye = vec3(3.0 * cos(_T * 0.2), 0.0, 3.0 * sin(_T * 0.2));
+  float i_fovDensity = _T < 32.0 ? 4.0 : _T < 64.0 ? 2.0 : 1.0;
+  vec3 viewDir = rayDirection(90.0 + sin(floor(_T / i_fovDensity) * 1000.0) * 60.0, RESOLUTION.xy, gl_FragCoord.xy);
+  vec3 i_eye = vec3(3.0, 0.0, 0.0);
+  vec3 i_up = normalize(vec3(cos(_T * 0.1), sin(_T * 0.1), cos(_T * 0.12)));
 
-  mat4 i_viewToWorld = viewMatrix(eye, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
+  mat4 i_viewToWorld = viewMatrix(i_eye, vec3(0.0, 0.0, 0.0), i_up);
 
   vec3 worldDir = (i_viewToWorld * vec4(viewDir, 0.0)).xyz;
 
-  vec2 r = shortestDistanceToSurface(eye, worldDir, i_MIN_DIST, i_MAX_DIST, false);
+  vec2 r = shortestDistanceToSurface(i_eye, worldDir, i_MIN_DIST, i_MAX_DIST, false);
   float i_dist = r.x;
   float i_material = r.y;
 
@@ -282,8 +306,8 @@ void main() {
     return;
   }
 
-  vec3 i_p = eye + i_dist * worldDir;
-  vec3 i_color = calcMaterial(i_p, eye, worldDir, int(i_material));
+  vec3 i_p = i_eye + i_dist * worldDir;
+  vec3 i_color = calcMaterial(i_p, i_eye, worldDir, int(i_material));
 
   _C = vec4(postProcess(i_color), 1.0);
 }

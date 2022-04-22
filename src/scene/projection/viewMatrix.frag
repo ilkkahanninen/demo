@@ -7,10 +7,10 @@
  */
 mat4 viewMatrix(vec3 eye, vec3 center, vec3 up) {
     // Based on gluLookAt man page
-    vec3 f = normalize(center - eye);
-    vec3 s = normalize(cross(f, up));
-    vec3 u = cross(s, f);
-    return mat4(vec4(s, 0.0), vec4(u, 0.0), vec4(-f, 0.0), vec4(0.0, 0.0, 0.0, 1));
+    vec3 i_f = normalize(center - eye);
+    vec3 i_s = normalize(cross(i_f, up));
+    vec3 i_u = cross(i_s, i_f);
+    return mat4(vec4(i_s, 0.0), vec4(i_u, 0.0), vec4(-i_f, 0.0), vec4(0.0, 0.0, 0.0, 1));
 }
 
 #pragma glslify: export(viewMatrix)

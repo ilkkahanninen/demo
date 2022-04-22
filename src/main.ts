@@ -1,54 +1,73 @@
 import { play } from "./music";
-import { initShader } from "./webgl";
+import { loadShader } from "./webgl";
 
-const vertShader = require(process.env.NODE_ENV !== "production"
+let vertShader = require(process.env.NODE_ENV !== "production"
   ? "./scene/scene.vert"
   : "../dist/intermediate/out.min.vert");
 
-const fragShader = require(process.env.NODE_ENV !== "production"
+let fragShader = require(process.env.NODE_ENV !== "production"
   ? "./scene/scene.frag"
   : "../dist/intermediate/out.min.frag");
 
-(() => {
-  const canvas = document.querySelector<HTMLCanvasElement>("#c")!;
-  canvas.width = 1280;
-  canvas.height = 720;
+document.body.style.background = "#000";
+document.body.style.margin = "0";
+document.body.style.display = "flex";
+document.body.style.alignItems = "center";
+document.body.style.height = "100vh";
 
-  const gl = canvas.getContext("webgl2")!;
-  if (process.env.NODE_ENV !== "production") {
-    if (!gl) {
-      return alert(
-        "Unable to initialize WebGL. Your browser or machine may not support it."
-      );
-    }
+let canvas = document.querySelector<HTMLCanvasElement>("canvas")!;
+canvas.style.width = "100%";
+canvas.width = 1280;
+canvas.height = 720;
+
+let gl = canvas.getContext("webgl2")!;
+
+if (process.env.NODE_ENV !== "production") {
+  if (!gl) {
+    alert(
+      "Unable to initialize WebGL. Your browser or machine may not support it."
+    );
   }
+}
 
-  const buffer = gl.createBuffer();
+let buffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+let positions = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+let vertexShader = loadShader(gl, gl.VERTEX_SHADER, vertShader);
+let fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fragShader);
+
+let program = gl.createProgram()!;
+gl.attachShader(program, vertexShader);
+gl.attachShader(program, fragmentShader);
+gl.linkProgram(program);
+
+if (process.env.NODE_ENV !== "production") {
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    throw (
+      "Unable to initialize the shader program: " +
+      gl.getProgramInfoLog(program)
+    );
+  }
+}
+
+let vertexPos = gl.getAttribLocation(program, "_V");
+let timeUniform = gl.getUniformLocation(program, "_T");
+let audioCtx: AudioContext | undefined;
+
+let renderNext = () => {
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  const positions = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+  gl.vertexAttribPointer(vertexPos, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(vertexPos);
+  gl.useProgram(program);
+  gl.uniform1f(timeUniform, audioCtx!.currentTime / 0.4);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-  const program = initShader(gl, vertShader, fragShader);
-  const vertexPos = gl.getAttribLocation(program, "_V");
-  const timeUniform = gl.getUniformLocation(program, "_T");
+  requestAnimationFrame(renderNext);
+};
 
-  const renderNext = (time: DOMHighResTimeStamp) => {
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.vertexAttribPointer(vertexPos, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(vertexPos);
-    gl.useProgram(program);
-    gl.uniform1f(timeUniform, time * 0.001 * (0.25 / 0.2));
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
-    requestAnimationFrame(renderNext);
-  };
-
-  let playing = false;
-  window.addEventListener("click", () => {
-    if (!playing) {
-      play();
-      requestAnimationFrame(renderNext);
-      playing = true;
-    }
-  });
-})();
+window.onclick = () => {
+  audioCtx = play();
+  requestAnimationFrame(renderNext);
+};
