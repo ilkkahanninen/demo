@@ -233,7 +233,8 @@ vec3 postProcess(vec3 color) {
   float i_scanlineDensity = 1.1 + sin(floor(_T));
   float i_scanline = (0.6 + sin(gl_FragCoord.y * i_scanlineDensity + _T * 5.0) * 0.6);
   float i_strength = (pow(length(gl_FragCoord.xy - RESOLUTION.xy / 2.0) / i_maxDist, 5.0)) * i_scanline;
-  return color * (1.3 - i_strength);
+  float i_fade = min(min(1.0, _T / 32.0), 1.0 - (_T - 240.0) / 16.0);
+  return color * (1.3 - i_strength) * i_fade;
 }
 
 vec3 calcEnvMaterial(vec3 p, vec3 eye, int material) {
