@@ -44,51 +44,56 @@ const int MATERIAL_FARJAN2 = 4;
 
 float sdRoundBox( vec3 p, vec3 b, float r )
 {
-  vec3 q = abs(p) - b;
-  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - r;
+  vec3 i_q = abs(p) - b;
+  return length(max(i_q,0.0)) + min(max(i_q.x,max(i_q.y,i_q.z)),0.0) - r;
 }
 
 float sdRoundedCylinder( vec3 p, float ra, float rb, float h )
 {
-  vec2 d = vec2( length(p.xz)-2.0*ra+rb, abs(p.y) - h );
-  return min(max(d.x,d.y),0.0) + length(max(d,0.0)) - rb;
+  vec2 i_d = vec2( length(p.xz)-2.0*ra+rb, abs(p.y) - h );
+  return min(max(i_d.x,i_d.y),0.0) + length(max(i_d,0.0)) - rb;
 }
 
 float kansio(vec3 p, vec3 b, vec3 skewPt, float skew) {
-    float s = skew * (p.y - skewPt.y);
-    vec3 q = abs(p) - b - vec3(s, 0.0, s);
-    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+    float i_s = skew * (p.y - skewPt.y);
+    vec3 i_q = abs(p) - b - vec3(i_s, 0.0, i_s);
+    return length(max(i_q, 0.0)) + min(max(i_q.x, max(i_q.y, i_q.z)), 0.0);
 }
 
 vec2 farjan(vec3 p) {
-  float alapohjaBody = sdRoundBox(p, vec3(0.5, 0.1, 0.4), 0.1);
-  float alapohjaKeula = sdRoundedCylinder(p + vec3(0.5, 0., 0.), 0.25, 0.1, 0.1);
-  float alapohja = opUnion(alapohjaBody, alapohjaKeula);
+  float i_alapohjaBody = sdRoundBox(p, vec3(0.5, 0.1, 0.4), 0.1);
+  float i_alapohjaKeula = sdRoundedCylinder(p + vec3(0.5, 0., 0.), 0.25, 0.1, 0.1);
+  float i_alapohja = opUnion(i_alapohjaBody, i_alapohjaKeula);
 
-  float ylapohjaBody = sdRoundBox(p, vec3(0.52, 0.12, 0.42), 0.1);
-  float ylapohjaKeula = sdRoundedCylinder(p + vec3(0.5, 0., 0.), 0.26, 0.1, 0.12);
-  float ylapohjaLeikkaus = cube(p + vec3(0.0, 1.0, 0.0), vec3(2.0, 1.0, 2.0));
-  float ylapohja = opDiff(opUnion(ylapohjaBody, ylapohjaKeula), ylapohjaLeikkaus);
+  float i_ylapohjaBody = sdRoundBox(p, vec3(0.52, 0.12, 0.42), 0.1);
+  float i_ylapohjaKeula = sdRoundedCylinder(p + vec3(0.5, 0., 0.), 0.26, 0.1, 0.12);
+  float i_ylapohjaLeikkaus = cube(p + vec3(0.0, 1.0, 0.0), vec3(2.0, 1.0, 2.0));
+  float i_ylapohja = opDiff(opUnion(i_ylapohjaBody, i_ylapohjaKeula), i_ylapohjaLeikkaus);
 
-  vec3 kaiteetP = p + vec3(0.0, -0.2, 0.0);
-  float kaiteetBody = sdRoundBox(kaiteetP, vec3(0.53, 0.11, 0.43), 0.02);
-  float kaiteetKeula = sdRoundedCylinder(kaiteetP + vec3(0.5, 0., 0.), 0.225, 0.02, 0.11);
-  float kaiteetLeikkaus = cappedCylinder(kaiteetP + vec3(0.5, 0., 0.), 0.4, 0.2);
-  float kaiteet = opDiff(
-    opUnion(kaiteetBody, kaiteetKeula),
-    kaiteetLeikkaus
+  vec3 i_kaiteetP = p + vec3(0.0, -0.2, 0.0);
+  float i_kaiteetBody = sdRoundBox(i_kaiteetP, vec3(0.53, 0.11, 0.43), 0.02);
+  float i_kaiteetKeula = sdRoundedCylinder(i_kaiteetP + vec3(0.5, 0., 0.), 0.225, 0.02, 0.11);
+  float i_kaiteetLeikkaus = cappedCylinder(i_kaiteetP + vec3(0.5, 0., 0.), 0.4, 0.2);
+  float i_kaiteet = opDiff(
+    opUnion(i_kaiteetBody, i_kaiteetKeula),
+    i_kaiteetLeikkaus
   );
 
-  vec3 kansiP = p + vec3(0.1, -0.4, 0.0);
-  float kansi1Body = kansio(kansiP, vec3(0.55, 0.2, 0.46), vec3(0.1, -0.4, 0.0), -0.2);
-  float kansi1Leikkaus = cube(p + vec3(-0.1, -0.5, 0.0), vec3(0.4, 0.12, 0.5));
-  float kansi1 = opDiff(kansi1Body, kansi1Leikkaus);
+  vec3 i_komentosiltaP = p + vec3(0.1, -0.4, 0.0);
+  float i_komentosiltaBody = kansio(i_komentosiltaP, vec3(0.55, 0.2, 0.46), vec3(0.1, -0.4, 0.0), -0.2);
+  float i_komentosiltaLeikkaus = cube(p + vec3(-0.3, -0.6, 0.0), vec3(0.4, 0.12, 0.5));
+  float i_komentosiltaLeikkaus2 = cube(p + vec3(0., -0.52, 0.0), vec3(0.2, 0.15, 0.5));
+  float i_komentosilta = opDiff(i_komentosiltaBody, opUnion(i_komentosiltaLeikkaus, i_komentosiltaLeikkaus2));
+
+  float i_komentosiltaYla = kansio(p + vec3(0.3, -0.7, 0.0), vec3(0.2, 0.1, 0.4), vec3(0.1, -0.6, 0.0), -0.2);
+
+  float i_kannet = kansio(p + vec3(0., -0.4, 0.0), vec3(0.35, 0.2, 0.3), vec3(0., -0.2, 0.), -0.2);
 
   return opRUnion(
-    vec2(alapohja, MATERIAL_FARJAN),
+    vec2(i_alapohja, MATERIAL_FARJAN),
     vec2(opUnion(
-      opUnion(ylapohja, kaiteet),
-      kansi1
+      opUnion(i_ylapohja, i_kaiteet),
+      opUnion(opUnion(i_komentosilta, i_komentosiltaYla), i_kannet)
     ), MATERIAL_FARJAN2)
   );
 }
@@ -141,29 +146,32 @@ vec2 metaBalls(vec3 p) {
 }
 
 vec2 render(vec3 p) {
-  vec3 p1 = rotateY(p, _T * floor(_T / 32.0) * 0.1);
+  vec3 i_p1 = rotateY(p, _T * floor(_T / 32.0) * 0.1);
 
-  vec2 i_env = envUnion(p1);
+  vec2 i_env = envUnion(i_p1);
   vec2 i_plainEnv = environment(p);
 
-  vec2 i_balls = metaBalls(p1);
+  vec2 i_balls = metaBalls(i_p1);
 
-  return farjan(p1);
-  // float part = floor(_T / 32.0);
-  // if (part < 2.)
-  //   return i_plainEnv;
-  // if (part < 3.)
-  //   return i_env;
-  // if (part < 4.)
-  //   return opRUnion(i_plainEnv, i_balls);
-  // if (part < 5.)
-  //   return opRUnion(i_env, i_balls);
-  // if (part < 6.)
-  //   return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_displacedLogo : i_balls);
-  // if (part < 7.)
-  //   return opRUnion(i_plainEnv, i_balls);
-  // if (part < 8.)
-  //   return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_displacedLogo : i_balls);
+  vec2 i_farjan = farjan(i_p1);
+
+  float part = floor(_T / 32.0);
+  if (part < 1.)
+    return i_plainEnv;
+  if (part < 2.)
+    return i_env;
+  if (part < 3.)
+    return opRUnion(i_plainEnv, i_balls);
+  if (part < 4.)
+    return opRUnion(i_env, i_balls);
+  if (part < 5.)
+    return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_farjan : i_balls);
+  if (part < 6.)
+    return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_farjan : i_balls);
+  if (part < 7.)
+    return opRUnion(i_plainEnv, i_balls);
+  if (part < 8.)
+    return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_farjan : i_balls);
 }
 
 vec2 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, bool envOnly) {
@@ -209,13 +217,13 @@ vec3 estimateNormal(vec3 p) {
  * See https://en.wikipedia.org/wiki/Phong_reflection_model#Description
  */
 vec3 phongContribForLight(vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye, vec3 lightPos, vec3 lightIntensity) {
-  vec3 N = estimateNormal(p);
-  vec3 L = normalize(lightPos - p);
-  vec3 V = normalize(eye - p);
-  vec3 R = normalize(reflect(-L, N));
+  vec3 i_N = estimateNormal(p);
+  vec3 i_L = normalize(lightPos - p);
+  vec3 i_V = normalize(eye - p);
+  vec3 i_R = normalize(reflect(-i_L, i_N));
 
-  float dotLN = dot(L, N);
-  float dotRV = dot(R, V);
+  float dotLN = dot(i_L, i_N);
+  float dotRV = dot(i_R, i_V);
 
   if (dotLN < 0.0) {
     // Light not visible from this point on the surface
@@ -263,8 +271,8 @@ vec3 postProcess(vec3 color) {
   float i_maxDist = length(RESOLUTION.xy) / 2.0;
   float i_scanlineDensity = 1.1 + sin(floor(_T));
   float i_scanline = (0.6 + sin(gl_FragCoord.y * i_scanlineDensity + _T * 5.0) * 0.6);
-  float i_strength = (pow(length(gl_FragCoord.xy - RESOLUTION.xy / 2.0) / i_maxDist, 5.0)) * i_scanline;
-  float i_fade = 1.0;//min(min(1.0, _T / 32.0), 1.0 - (_T - 240.0) / 16.0);
+  float i_strength = (pow(length(gl_FragCoord.xy - RESOLUTION.xy / 2.0) / i_maxDist, 10.0)) * i_scanline;
+  float i_fade = min(min(1.0, _T / 32.0), 1.0 - (_T - 240.0) / 16.0);
   return color * (1.3 - i_strength) * i_fade;
 }
 
@@ -296,24 +304,24 @@ vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, int material) {
 
     vec3 i_reflectionColor = calcEnvMaterial(p + i_rEnv.x * i_reflectionDir, p, int(i_rEnv.y));
 
-    vec3 i_K_a = vec3(0.3, 0.3, 0.3);
-    vec3 i_K_d = vec3(1.0, 1.0, 1.0);
-    vec3 i_K_s = vec3(1.0, 1.0, 1.0);
+    vec3 i_K_a = vec3(0.3, 0.3, 0.0);
+    vec3 i_K_d = vec3(1.0, 1.0, 0.0);
+    vec3 i_K_s = vec3(1.0, 1.0, 0.0);
     float i_shininess = 10.0;
     vec3 bodyColor = phongIllumination(i_K_a, i_K_d, i_K_s, i_shininess, p, eye);
 
-    return bodyColor * i_reflectionColor * 2.5;
+    return (bodyColor + i_reflectionColor) * 0.5;
   } else if (material == MATERIAL_FARJAN) {
-    vec3 i_K_a = vec3(0.4, 0.3, 0.2);
-    vec3 i_K_d = vec3(1.0, 0.2, 0.2);
+    vec3 i_K_a = vec3(0.4, 0.2, 0.2);
+    vec3 i_K_d = vec3(1.0, 0.1, 0.2);
     vec3 i_K_s = vec3(1.0, 1.0, 1.0);
-    float i_shininess = 10.0;
+    float i_shininess = 40.0;
     return phongIllumination(i_K_a, i_K_d, i_K_s, i_shininess, p, eye);
   } else if (material == MATERIAL_FARJAN2) {
     vec3 i_K_a = vec3(0.7, 0.7, 0.7);
     vec3 i_K_d = vec3(1.0, 1.0, 1.0);
     vec3 i_K_s = vec3(1.0, 1.0, 1.0);
-    float i_shininess = 10.0;
+    float i_shininess = 40.0;
     return phongIllumination(i_K_a, i_K_d, i_K_s, i_shininess, p, eye);
   }
 
@@ -321,14 +329,14 @@ vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, int material) {
 }
 
 void main() {
-  float i_fovDensity = 45.0;//_T < 32.0 ? 4.0 : _T < 64.0 ? 2.0 : 1.0;
-  vec3 viewDir = rayDirection(90.0 + sin(floor(_T / i_fovDensity) * 1000.0) * 60.0, RESOLUTION.xy, gl_FragCoord.xy);
-  vec3 i_eye = vec3(- 3.0, sin(_T) * 2.0 + 1.0, 2.0);
-  vec3 i_up = vec3(0.0, 1.0, 0.0); //normalize(vec3(cos(_T * 0.1), sin(_T * 0.1), cos(_T * 0.12)));
+  float i_fovDensity = _T < 32.0 ? 4.0 : _T < 64.0 ? 2.0 : 1.0;
+  vec3 i_viewDir = rayDirection(90.0 + sin(floor(_T / i_fovDensity) * 1000.0) * 60.0, RESOLUTION.xy, gl_FragCoord.xy);
+  vec3 i_eye = vec3(3.0, 0.0, 0.0);
+  vec3 i_up = normalize(vec3(cos(_T * 0.1), sin(_T * 0.1), cos(_T * 0.12)));
 
   mat4 i_viewToWorld = viewMatrix(i_eye, vec3(0.0, 0.0, 0.0), i_up);
 
-  vec3 worldDir = (i_viewToWorld * vec4(viewDir, 0.0)).xyz;
+  vec3 worldDir = (i_viewToWorld * vec4(i_viewDir, 0.0)).xyz;
 
   vec2 r = shortestDistanceToSurface(i_eye, worldDir, false);
   float i_dist = r.x;

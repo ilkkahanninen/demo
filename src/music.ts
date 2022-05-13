@@ -1,7 +1,31 @@
+const notes = [
+  0,null,null ,3,null,null,2,null,
+  -2,null,-2,null,2,null,5,null,
+  3,5,null,7,null,null,null,10,
+  10,8,null,8,null,null,7,null,
+  5,null,7,8,null,10,null,10,
+  null,null,10,null,null,10,null,null,
+  10,null,null,10,null,null,10,null,
+  // null,null,null,null,null,null,null,null,
+  -14,null,null,-9,null,null,-10,null,
+]
+
 export let play = () => {
   let ctx = new AudioContext();
-  return ctx;
+  // return ctx;
 
+  let theme = ctx.createOscillator();
+  theme.type = "square";
+  theme.frequency.value = 440;
+  theme.start();
+
+  let themeFilter = ctx.createBiquadFilter()
+  themeFilter.Q.value = 2.0
+  themeFilter.frequency.value = 0
+
+  let themeGain = ctx.createGain();
+  themeGain.gain.value = 0.2;
+  
   let osc = ctx.createOscillator();
   osc.type = "sine";
   osc.frequency.value = 55;
@@ -19,7 +43,7 @@ export let play = () => {
   fmFreq.gain.value = 440;
 
   let delay = ctx.createDelay();
-  delay.delayTime.value = 0.5;
+  delay.delayTime.value = 0.4;
   let delayAttenuator = ctx.createGain();
   delayAttenuator.gain.value = 0.4;
 
@@ -93,6 +117,7 @@ export let play = () => {
   let masterFilter = ctx.createBiquadFilter();
   masterFilter.type = "lowpass";
 
+  theme.connect(themeFilter).connect(themeGain).connect(delay);
   osc2.connect(fmFreq).connect(osc.frequency);
   osc.connect(velocity).connect(fmSynthFilter).connect(compressor);
   fmSynthFilter.connect(delay).connect(delayAttenuator).connect(compressor);
@@ -109,8 +134,27 @@ export let play = () => {
     .connect(compGain) /*.connect(compressor2)*/
     .connect(ctx.destination);
 
-  let scheduleNote = (step: number, time: number) => {
+  let scheduleNote = (tick: number, time: number) => {
+    let step = Math.floor(tick / 2)
     let currentTime = ctx.currentTime + time;
+
+    if (step >= 64) {
+      const note = notes[tick % notes.length]
+      if (note !== null) {
+        let coef = (tick-64) / 512
+        theme.frequency.setValueAtTime(220 * Math.pow(2, note / 12), currentTime)
+        themeFilter.frequency.setValueCurveAtTime([8000 * coef, 110 * coef],
+          currentTime,
+          0.1)
+        themeGain.gain.setValueCurveAtTime([0.1, 0],
+          currentTime,
+          0.1)
+      } else {
+        themeGain.gain.setValueAtTime(0, currentTime)
+      }
+    }
+
+    if (tick % 2 !== 0) return
 
     if (step % 32 != 31) {
       kickOsc.frequency.setValueCurveAtTime(
@@ -152,7 +196,7 @@ export let play = () => {
     if (step >= 64) {
       bassLead.frequency.exponentialRampToValueAtTime(55, currentTime + 0.2);
       bassLeadFilter.frequency.setValueCurveAtTime(
-        [1110, 0],
+        [880, 0],
         currentTime + 0.2,
         0.1
       );
@@ -185,8 +229,8 @@ export let play = () => {
     }
   };
 
-  for (let i = 0; i < 256; i++) {
-    scheduleNote(i, i * 0.4);
+  for (let i = 0; i < 1024; i++) {
+    scheduleNote(i, i * 0.2);
   }
 
   masterFilter.frequency.setValueCurveAtTime(
