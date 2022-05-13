@@ -220,7 +220,7 @@ vec3 phongContribForLight(vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye, vec
   vec3 i_N = estimateNormal(p);
   vec3 i_L = normalize(lightPos - p);
   vec3 i_V = normalize(eye - p);
-  vec3 i_R = normalize(reflect(-i_L, i_N));
+  vec3 i_R = normalize(reflect(-i_L, N));
 
   float dotLN = dot(i_L, i_N);
   float dotRV = dot(i_R, i_V);

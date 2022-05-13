@@ -87,16 +87,16 @@ export let play = () => {
   // let whiteNoiseVCA = ctx.createGain();
   // whiteNoiseVCA.gain.value = 0;
 
-  let bassLead = ctx.createOscillator();
-  bassLead.type = "sawtooth";
-  bassLead.frequency.value = 55;
-  bassLead.start();
-  let bassLeadFilter = ctx.createBiquadFilter();
-  bassLeadFilter.type = "lowpass";
-  bassLeadFilter.Q.value = 1.5;
-  bassLeadFilter.frequency.value = 0;
-  let bassLeadVCA = ctx.createGain();
-  bassLeadVCA.gain.value = 0.2;
+  // let bassLead = ctx.createOscillator();
+  // bassLead.type = "sawtooth";
+  // bassLead.frequency.value = 55;
+  // bassLead.start();
+  // let bassLeadFilter = ctx.createBiquadFilter();
+  // bassLeadFilter.type = "lowpass";
+  // bassLeadFilter.Q.value = 1.5;
+  // bassLeadFilter.frequency.value = 0;
+  // let bassLeadVCA = ctx.createGain();
+  // bassLeadVCA.gain.value = 0.2;
 
   let compressor = ctx.createDynamicsCompressor();
   compressor.threshold.value = -50;
@@ -128,7 +128,7 @@ export let play = () => {
   // whiteNoise.connect(whiteNoiseVCA);
   // whiteNoiseVCA.connect(compressor);
   // whiteNoiseVCA.connect(delay);
-  bassLead.connect(bassLeadFilter).connect(bassLeadVCA).connect(compressor);
+  // bassLead.connect(bassLeadFilter).connect(bassLeadVCA).connect(compressor);
   compressor
     .connect(masterFilter)
     .connect(compGain) /*.connect(compressor2)*/
@@ -193,19 +193,19 @@ export let play = () => {
     //   );
     // }
 
-    if (step >= 64) {
-      bassLead.frequency.exponentialRampToValueAtTime(55, currentTime + 0.2);
-      bassLeadFilter.frequency.setValueCurveAtTime(
-        [880, 0],
-        currentTime + 0.2,
-        0.1
-      );
-      bassLeadVCA.gain.setValueCurveAtTime(
-        [0, 0.02, 0.01, 0.05, 0],
-        currentTime + 0.2,
-        0.1
-      );
-    }
+    // if (step >= 64) {
+    //   bassLead.frequency.exponentialRampToValueAtTime(55, currentTime + 0.2);
+    //   bassLeadFilter.frequency.setValueCurveAtTime(
+    //     [880, 0],
+    //     currentTime + 0.2,
+    //     0.1
+    //   );
+    //   bassLeadVCA.gain.setValueCurveAtTime(
+    //     [0, 0.02, 0.01, 0.05, 0],
+    //     currentTime + 0.2,
+    //     0.1
+    //   );
+    // }
 
     if (step >= 32) {
       velocity.gain.setValueCurveAtTime(
