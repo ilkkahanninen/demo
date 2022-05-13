@@ -1,5 +1,6 @@
 export let play = () => {
   let ctx = new AudioContext();
+  return ctx;
 
   let osc = ctx.createOscillator();
   osc.type = "sine";
@@ -18,9 +19,9 @@ export let play = () => {
   fmFreq.gain.value = 440;
 
   let delay = ctx.createDelay();
-  delay.delayTime.value = .5;
+  delay.delayTime.value = 0.5;
   let delayAttenuator = ctx.createGain();
-  delayAttenuator.gain.value = .4;
+  delayAttenuator.gain.value = 0.4;
 
   let fmSynthFilter = ctx.createBiquadFilter();
   fmSynthFilter.type = "highpass";
@@ -71,13 +72,13 @@ export let play = () => {
   bassLeadFilter.Q.value = 1.5;
   bassLeadFilter.frequency.value = 0;
   let bassLeadVCA = ctx.createGain();
-  bassLeadVCA.gain.value = .2;
+  bassLeadVCA.gain.value = 0.2;
 
   let compressor = ctx.createDynamicsCompressor();
   compressor.threshold.value = -50;
   compressor.knee.value = 40;
   compressor.attack.value = 0;
-  compressor.release.value = .1;
+  compressor.release.value = 0.1;
   compressor.ratio.value = 12;
 
   let compGain = ctx.createGain();
@@ -118,11 +119,11 @@ export let play = () => {
         0.2
       );
       kickVCA.gain.setValueCurveAtTime(
-        [0, 1, .05, .1, .5],
+        [0, 1, 0.05, 0.1, 0.5],
         currentTime,
-        .1
+        0.1
       );
-      kickFilter.frequency.setValueCurveAtTime([1000, 10], currentTime, .1);
+      kickFilter.frequency.setValueCurveAtTime([1000, 10], currentTime, 0.1);
     }
 
     osc.frequency.exponentialRampToValueAtTime(
@@ -135,10 +136,10 @@ export let play = () => {
     );
 
     if (step >= 32) {
-      hhGain.gain.setValueCurveAtTime([.006, 0], currentTime + .1, .01);
-      hhGain.gain.setValueCurveAtTime([.006, 0], currentTime + .3, .01);
+      hhGain.gain.setValueCurveAtTime([0.006, 0], currentTime + 0.1, 0.01);
+      hhGain.gain.setValueCurveAtTime([0.006, 0], currentTime + 0.3, 0.01);
     }
-    hhGain.gain.setValueCurveAtTime([.008, 0], currentTime + .2, .02);
+    hhGain.gain.setValueCurveAtTime([0.008, 0], currentTime + 0.2, 0.02);
 
     // if (step % 4 == 1) {
     //   whiteNoiseVCA.gain.setValueCurveAtTime(
@@ -149,51 +150,44 @@ export let play = () => {
     // }
 
     if (step >= 64) {
-      bassLead.frequency.exponentialRampToValueAtTime(
-        55,
-        currentTime + .2
-      );
+      bassLead.frequency.exponentialRampToValueAtTime(55, currentTime + 0.2);
       bassLeadFilter.frequency.setValueCurveAtTime(
         [1110, 0],
-        currentTime + .2,
-        .1
+        currentTime + 0.2,
+        0.1
       );
       bassLeadVCA.gain.setValueCurveAtTime(
-        [0, .02, .01, .05, 0],
-        currentTime + .2,
-        .1
+        [0, 0.02, 0.01, 0.05, 0],
+        currentTime + 0.2,
+        0.1
       );
     }
 
     if (step >= 32) {
       velocity.gain.setValueCurveAtTime(
-        [.01, 0, .1, 0].map((v) => v * Math.min((step - 32) / 64, 1)),
-        currentTime + .2,
-        .2
+        [0.01, 0, 0.1, 0].map((v) => v * Math.min((step - 32) / 64, 1)),
+        currentTime + 0.2,
+        0.2
       );
 
       // osc.type = "sine";
       if (step % 2 == 0) {
         // osc.type = "triangle";
-        fmFreq.gain.setValueCurveAtTime([1600, 25.5], currentTime + .2, .2);
+        fmFreq.gain.setValueCurveAtTime([1600, 25.5], currentTime + 0.2, 0.2);
       } else if (step % 4 == 0) {
-        fmFreq.gain.setValueCurveAtTime(
-          [440, 0],
-          currentTime + .2,
-          .2
-        );
+        fmFreq.gain.setValueCurveAtTime([440, 0], currentTime + 0.2, 0.2);
       }
 
       fmSynthFilter.frequency.exponentialRampToValueAtTime(
-        1000 + 200 * (Math.floor(step / 4) % 4),// - 100 * Math.sin(step),
+        1000 + 200 * (Math.floor(step / 4) % 4), // - 100 * Math.sin(step),
         currentTime
       );
     }
   };
 
   for (let i = 0; i < 256; i++) {
-      scheduleNote(i,  i * 0.4);
-  };
+    scheduleNote(i, i * 0.4);
+  }
 
   masterFilter.frequency.setValueCurveAtTime(
     [0.1, 16000],

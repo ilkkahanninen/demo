@@ -37,28 +37,47 @@ out vec4 _C;
 //  w = unused
 
 const int MATERIAL_ENV = 0;
-const int MATERIAL_LOGO = 1;
+const int MATERIAL_FARJAN = 1;
 const int MATERIAL_BALLS = 2;
 const int MATERIAL_ENV2 = 3;
+const int MATERIAL_FARJAN2 = 4;
 
-vec2 logo(vec3 p0) {
-  vec3 i_p = p0 + vec3(0.0, 0.05, 0.0);
-  float i_d = 0.181;
-  float i_rJalka = cube(i_p + vec3(-0.2185, 0.044, 0.0), vec3(0.181, 0.819, i_d) / 2.0);
-  float i_rJalkaLaajennos = cube(i_p + vec3(-0.175, -0.102, 0.0), vec3(0.28, 0.525, i_d) / 2.0);
-  float i_rJalkaLeikkaus = cube(i_p + vec3(-0.053, -0.093, 0.0), vec3(0.15, 0.186, i_d * 2.0) / 2.0);
-  float i_osa1 = opDiff(opUnion(i_rJalka, i_rJalkaLaajennos), i_rJalkaLeikkaus);
+float sdRoundBox( vec3 p, vec3 b, float r )
+{
+  vec3 q = abs(p) - b;
+  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - r;
+}
 
-  float i_rKaari = cappedCylinder(rotateX(i_p + vec3(-0.029, -0.194, 0.0), i_PI / 2.0), 0.7 / 2.0, i_d / 2.0);
-  float i_rKaariPuolitus = cube(i_p + vec3(-0.22, -0.203, 0.0), vec3(0.357, 0.8, i_d * 3.0) / 2.0);
-  float i_rKaariSisus = cappedCylinder(rotateX(i_p + vec3(-0.029, -0.194, 0.0), i_PI / 2.0), 0.26 / 2.0, i_d * 2.0);
-  float i_osa2 = opDiff(opDiff(i_rKaari, i_rKaariPuolitus), i_rKaariSisus);
+float sdRoundedCylinder( vec3 p, float ra, float rb, float h )
+{
+  vec2 d = vec2( length(p.xz)-2.0*ra+rb, abs(p.y) - h );
+  return min(max(d.x,d.y),0.0) + length(max(d,0.0)) - rb;
+}
 
-  float i_rVino = cube(rotateZ(i_p + vec3(0.17, 0.25, 0.0), -0.537561), vec3(0.189, 0.589, i_d) / 2.0);
-  float i_rVinoLeikkaus = cube(i_p + vec3(0.264, 0.537, 0.0), vec3(0.46, 0.164, i_d * 2.0) / 2.0);
-  float i_osa3 = opDiff(i_rVino, i_rVinoLeikkaus);
+vec2 farjan(vec3 p) {
+  float alapohjaBody = sdRoundBox(p, vec3(0.5, 0.1, 0.4), 0.1);
+  float alapohjaKeula = sdRoundedCylinder(p + vec3(0.5, 0., 0.), 0.25, 0.1, 0.1);
+  float alapohja = opUnion(alapohjaBody, alapohjaKeula);
 
-  return vec2(opUnion(opUnion(i_osa1, i_osa2), i_osa3), MATERIAL_LOGO);
+  float ylapohjaBody = sdRoundBox(p, vec3(0.52, 0.12, 0.42), 0.1);
+  float ylapohjaKeula = sdRoundedCylinder(p + vec3(0.5, 0., 0.), 0.26, 0.1, 0.12);
+  float ylapohjaLeikkaus = cube(p + vec3(0.0, 1.0, 0.0), vec3(2.0, 1.0, 2.0));
+  float ylapohja = opDiff(opUnion(ylapohjaBody, ylapohjaKeula), ylapohjaLeikkaus);
+
+  vec3 kaiteetP = p + vec3(0.0, -0.2, 0.0);
+  float kaiteetBody = sdRoundBox(kaiteetP, vec3(0.53, 0.11, 0.43), 0.02);
+  float kaiteetKeula = sdRoundedCylinder(kaiteetP + vec3(0.5, 0., 0.), 0.225, 0.02, 0.11);
+  float kaiteetLeikkaus = cappedCylinder(kaiteetP + vec3(0.5, 0., 0.), 0.4, 0.2);
+
+  float kaiteet = opDiff(
+    opUnion(kaiteetBody, kaiteetKeula),
+    kaiteetLeikkaus
+  );
+
+  return opRUnion(
+    vec2(alapohja, MATERIAL_FARJAN),
+    vec2(opUnion(ylapohja, kaiteet), MATERIAL_FARJAN2)
+  );
 }
 
 vec2 environment(vec3 p) {
@@ -113,26 +132,25 @@ vec2 render(vec3 p) {
 
   vec2 i_env = envUnion(p1);
   vec2 i_plainEnv = environment(p);
-  float i_logoDisplacement = sin(p1.x * 30.0 + p1.y * 27.0 + p1.z * 250.0) + sin(p.y * 30.0 + _T * 10.0);
-  vec2 i_displacedLogo = logo(p1) + vec2(i_logoDisplacement * sin(_T) * 0.005, 0.0);
 
   vec2 i_balls = metaBalls(p1);
 
-  float part = floor(_T / 32.0);
-  if (part < 2.)
-    return i_plainEnv;
-  if (part < 3.)
-    return i_env;
-  if (part < 4.)
-    return opRUnion(i_plainEnv, i_balls);
-  if (part < 5.)
-    return opRUnion(i_env, i_balls);
-  if (part < 6.)
-    return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_displacedLogo : i_balls);
-  if (part < 7.)
-    return opRUnion(i_plainEnv, i_balls);
-  if (part < 8.)
-    return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_displacedLogo : i_balls);
+  return farjan(p1);
+  // float part = floor(_T / 32.0);
+  // if (part < 2.)
+  //   return i_plainEnv;
+  // if (part < 3.)
+  //   return i_env;
+  // if (part < 4.)
+  //   return opRUnion(i_plainEnv, i_balls);
+  // if (part < 5.)
+  //   return opRUnion(i_env, i_balls);
+  // if (part < 6.)
+  //   return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_displacedLogo : i_balls);
+  // if (part < 7.)
+  //   return opRUnion(i_plainEnv, i_balls);
+  // if (part < 8.)
+  //   return opRUnion(i_env, mod(_T, 2.0) < 1.0 ? i_displacedLogo : i_balls);
 }
 
 vec2 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, bool envOnly) {
@@ -213,8 +231,8 @@ vec3 phongContribForLight(vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye, vec
  * See https://en.wikipedia.org/wiki/Phong_reflection_model#Description
  */
 vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye) {
-  // const vec3 ambientLight = vec3(0.1, 0.1, 0.1);
-  // vec3 i_ambientColor = ambientLight * k_a;
+  const vec3 ambientLight = vec3(0.5, 0.5, 0.5);
+  vec3 i_ambientColor = ambientLight * k_a;
   float i_y = sin(_T) * 4.0;
 
   vec3 i_light1Pos = vec3(3.0 * cos(_T * 0.2), 0.0, 3.0 * sin(_T * 0.2));
@@ -225,7 +243,7 @@ vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 e
   vec3 i_light2Intensity = vec3(0.4, 0.4, 0.4);
   vec3 i_light2 = phongContribForLight(k_d, k_s, alpha, p, eye, i_light2Pos, i_light2Intensity);
 
-  return /*i_ambientColor +*/ i_light1 + i_light2;
+  return i_ambientColor + i_light1 + i_light2;
 }
 
 vec3 postProcess(vec3 color) {
@@ -233,7 +251,7 @@ vec3 postProcess(vec3 color) {
   float i_scanlineDensity = 1.1 + sin(floor(_T));
   float i_scanline = (0.6 + sin(gl_FragCoord.y * i_scanlineDensity + _T * 5.0) * 0.6);
   float i_strength = (pow(length(gl_FragCoord.xy - RESOLUTION.xy / 2.0) / i_maxDist, 5.0)) * i_scanline;
-  float i_fade = min(min(1.0, _T / 32.0), 1.0 - (_T - 240.0) / 16.0);
+  float i_fade = 1.0;//min(min(1.0, _T / 32.0), 1.0 - (_T - 240.0) / 16.0);
   return color * (1.3 - i_strength) * i_fade;
 }
 
@@ -272,10 +290,16 @@ vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, int material) {
     vec3 bodyColor = phongIllumination(i_K_a, i_K_d, i_K_s, i_shininess, p, eye);
 
     return bodyColor * i_reflectionColor * 2.5;
-  } else if (material == MATERIAL_LOGO) {
+  } else if (material == MATERIAL_FARJAN) {
     vec3 i_K_a = vec3(0.4, 0.3, 0.2);
-    vec3 i_K_d = vec3(1.0, 0.9, 0.5);
-    vec3 i_K_s = vec3(1.0, 1.0, 0.8);
+    vec3 i_K_d = vec3(1.0, 0.2, 0.2);
+    vec3 i_K_s = vec3(1.0, 1.0, 1.0);
+    float i_shininess = 10.0;
+    return phongIllumination(i_K_a, i_K_d, i_K_s, i_shininess, p, eye);
+  } else if (material == MATERIAL_FARJAN2) {
+    vec3 i_K_a = vec3(0.7, 0.7, 0.7);
+    vec3 i_K_d = vec3(1.0, 1.0, 1.0);
+    vec3 i_K_s = vec3(1.0, 1.0, 1.0);
     float i_shininess = 10.0;
     return phongIllumination(i_K_a, i_K_d, i_K_s, i_shininess, p, eye);
   }
@@ -284,10 +308,10 @@ vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, int material) {
 }
 
 void main() {
-  float i_fovDensity = _T < 32.0 ? 4.0 : _T < 64.0 ? 2.0 : 1.0;
+  float i_fovDensity = 45.0;//_T < 32.0 ? 4.0 : _T < 64.0 ? 2.0 : 1.0;
   vec3 viewDir = rayDirection(90.0 + sin(floor(_T / i_fovDensity) * 1000.0) * 60.0, RESOLUTION.xy, gl_FragCoord.xy);
-  vec3 i_eye = vec3(3.0, 0.0, 0.0);
-  vec3 i_up = normalize(vec3(cos(_T * 0.1), sin(_T * 0.1), cos(_T * 0.12)));
+  vec3 i_eye = vec3(3.0, sin(_T) * 3.0, 2.0);
+  vec3 i_up = vec3(0.0, 1.0, 0.0); //normalize(vec3(cos(_T * 0.1), sin(_T * 0.1), cos(_T * 0.12)));
 
   mat4 i_viewToWorld = viewMatrix(i_eye, vec3(0.0, 0.0, 0.0), i_up);
 
