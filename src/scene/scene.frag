@@ -54,6 +54,12 @@ float sdRoundedCylinder( vec3 p, float ra, float rb, float h )
   return min(max(d.x,d.y),0.0) + length(max(d,0.0)) - rb;
 }
 
+float kansio(vec3 p, vec3 b, vec3 skewPt, float skew) {
+    float s = skew * (p.y - skewPt.y);
+    vec3 q = abs(p) - b - vec3(s, 0.0, s);
+    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
 vec2 farjan(vec3 p) {
   float alapohjaBody = sdRoundBox(p, vec3(0.5, 0.1, 0.4), 0.1);
   float alapohjaKeula = sdRoundedCylinder(p + vec3(0.5, 0., 0.), 0.25, 0.1, 0.1);
@@ -68,15 +74,22 @@ vec2 farjan(vec3 p) {
   float kaiteetBody = sdRoundBox(kaiteetP, vec3(0.53, 0.11, 0.43), 0.02);
   float kaiteetKeula = sdRoundedCylinder(kaiteetP + vec3(0.5, 0., 0.), 0.225, 0.02, 0.11);
   float kaiteetLeikkaus = cappedCylinder(kaiteetP + vec3(0.5, 0., 0.), 0.4, 0.2);
-
   float kaiteet = opDiff(
     opUnion(kaiteetBody, kaiteetKeula),
     kaiteetLeikkaus
   );
 
+  vec3 kansiP = p + vec3(0.1, -0.4, 0.0);
+  float kansi1Body = kansio(kansiP, vec3(0.55, 0.2, 0.46), vec3(0.1, -0.4, 0.0), -0.2);
+  float kansi1Leikkaus = cube(p + vec3(-0.1, -0.5, 0.0), vec3(0.4, 0.12, 0.5));
+  float kansi1 = opDiff(kansi1Body, kansi1Leikkaus);
+
   return opRUnion(
     vec2(alapohja, MATERIAL_FARJAN),
-    vec2(opUnion(ylapohja, kaiteet), MATERIAL_FARJAN2)
+    vec2(opUnion(
+      opUnion(ylapohja, kaiteet),
+      kansi1
+    ), MATERIAL_FARJAN2)
   );
 }
 
@@ -310,7 +323,7 @@ vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, int material) {
 void main() {
   float i_fovDensity = 45.0;//_T < 32.0 ? 4.0 : _T < 64.0 ? 2.0 : 1.0;
   vec3 viewDir = rayDirection(90.0 + sin(floor(_T / i_fovDensity) * 1000.0) * 60.0, RESOLUTION.xy, gl_FragCoord.xy);
-  vec3 i_eye = vec3(3.0, sin(_T) * 3.0, 2.0);
+  vec3 i_eye = vec3(- 3.0, sin(_T) * 2.0 + 1.0, 2.0);
   vec3 i_up = vec3(0.0, 1.0, 0.0); //normalize(vec3(cos(_T * 0.1), sin(_T * 0.1), cos(_T * 0.12)));
 
   mat4 i_viewToWorld = viewMatrix(i_eye, vec3(0.0, 0.0, 0.0), i_up);
