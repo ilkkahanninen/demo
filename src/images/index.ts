@@ -22,7 +22,7 @@ export const imageScript: ImageScript[] = [
   {
     index: 10,
     begin: 1,
-    end: 8,
+    end: 7,
   },
   {
     index: 0,
@@ -70,36 +70,6 @@ export const imageScript: ImageScript[] = [
     end: 82.909,
   },
   {
-    index: 0,
-    begin: 90.136,
-    end: 93.545,
-  },
-  {
-    index: 1,
-    begin: 98.454,
-    end: 101.863,
-  },
-  {
-    index: 2,
-    begin: 106.772,
-    end: 112.09,
-  },
-  {
-    index: 3,
-    begin: 118.09,
-    end: 123.0,
-  },
-  {
-    index: 4,
-    begin: 128.727,
-    end: 134.318,
-  },
-  {
-    index: 5,
-    begin: 139.909,
-    end: 146.318,
-  },
-  {
     index: 7,
     begin: 171.954,
     end: 180.545,
@@ -109,7 +79,7 @@ export const imageScript: ImageScript[] = [
     begin: 210,
     end: 220,
   },
-];
+].map((s) => ({ ...s, end: s.end + 1 }));
 
 export const imageTime = (script: ImageScript, timeNow: number): number =>
   (timeNow - script.begin) / (script.end - script.begin);

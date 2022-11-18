@@ -40,15 +40,17 @@ out vec4 _C;
 //  y = material
 
 const int MATERIAL_DEFAULT = 0;
+const int MATERIAL_SEA = 1;
 
 float hash(vec3 p) {
   float a = 7.23 * p.x + 3.31 * p.y + 5.59 * p.z;
   float b = p.x * p.y * p.z;
-  return fract(a + b);
+  float h = fract(a + b);
+  return h * h;
 }
 
 float sph(vec3 i, vec3 f, vec3 c) {
-  float h = hash(i + c);
+  float h = hash(i + c) * 1.5;
   float rad = 0.4 * h;
   return length(f - vec3(c)) - rad;
 }
@@ -62,7 +64,7 @@ float sdBase(vec3 p) {
 float sdFbm(vec3 p, float d, float th) {
   float s = 1.0;
   int octaves = 9;
-  float glitchTime = _T * 0.02;
+  float glitchTime = _T * 0.01;
   if (fract(_T) > 1.0 - glitchTime * glitchTime) {
     octaves = int(5.0 + fract(_T * 200.0 * glitchTime) * 4.0);
   }
@@ -70,7 +72,7 @@ float sdFbm(vec3 p, float d, float th) {
   for (int i = 0; i < octaves; i++) {
     float n = s * sdBase(p);
 
-    n = smMax(n, d - 0.11 * s, 0.3 * s);
+    n = smMax(n, d - 0.15 * s, 0.3 * s);
     d = smMin(n, d, 0.3 * s);
     if (d > MAX_DIST)
       break;
@@ -81,7 +83,6 @@ float sdFbm(vec3 p, float d, float th) {
       break;
 
     p = mat3(0.00, 1.60, 1.20, -1.60, 0.72, -0.96, -1.20, -0.96, 1.28) * p;
-    // p = rotateZ(p, sin(float(i)) * 3.0);
   }
   return d;
 }
@@ -90,29 +91,38 @@ vec2 render(vec3 p) {
   const float size = 8.0;
   float d = length(p - vec3(0.0, -size, 0)) - size;
   float d2 = length(p + vec3(0.0, -0.02, 0.0) - vec3(0.0, -size, 0)) - size;
-  float dmin = min(d, d2);
-  return vec2(min(dmin, sdFbm(p, d, 0.02 * dmin)), MATERIAL_DEFAULT);
+
+  float sealevel = min(d, d2);
+  float terrain = sdFbm(p, d, 0.02 * sealevel);
+
+  return sealevel < terrain
+    ? vec2(sealevel + 0.005 * sin(327.2 * p.x + 908.2 * sin(p.y) + 331.2 * sin(p.z) + _T) / _T, MATERIAL_SEA)
+    : vec2(terrain, MATERIAL_DEFAULT);
 }
 
-vec3 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, vec3 lightPos) {
+//  z = light distance
+//  w = altitude
+vec4 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection, vec3 lightPos) {
   float depth = MIN_DIST;
   float distanceToLight = 100000.0;
   for (int i = 0; i < MAX_MARCHING_STEPS; i++) {
     vec3 p = eye + depth * marchingDirection;
     distanceToLight = min(distanceToLight, length(lightPos - p));
-    vec3 r = vec3(render(p), distanceToLight);
+    vec4 r = vec4(render(p), distanceToLight, 0.0);
     float dist = r.x;
     if (dist < EPSILON) {
       r.x = depth;
+      r.w = length(p) - 8.0;
       return r;
     }
     depth += dist * STEP_CORRECTION;
     if (depth >= MAX_DIST) {
       r.x = MAX_DIST;
+      r.w = length(p) - 8.0;
       return r;
     }
   }
-  return vec3(MAX_DIST, -1, distanceToLight);
+  return vec4(MAX_DIST, -1, 0.0, 0.0);
 }
 
 /**
@@ -185,20 +195,6 @@ vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 e
   return ambientColor + light1;
 }
 
-vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, int material, float dist) {
-  float fog = min(1.0, dist / MAX_DIST);
-  fog *= fog * fog;
-
-  vec3 K_a = vec3(0.0, 0.0, 0.1) * min(1.0, _T);
-  vec3 K_d = vec3(0.2, 0.25, 0.3) * min(1.0, _T * 0.5);
-  vec3 K_s = vec3(1.0, 0.9, 0.8) * min(1.0, _T * 0.25);
-  float shininess = max(10.0, 1000.0 - _T * 10.0);
-  vec3 bodyColor = phongIllumination(K_a, K_d, K_s, shininess, p, eye);
-
-  float red = min(1.0, fog * _T * 0.07);
-  return (1.0 - fog) * bodyColor + vec3(red * red, 0.0, 0.0);
-}
-
 float rand(float s) {
   float s1 = 0.0;
   float s2 = 0.0;
@@ -214,8 +210,43 @@ float rand(float s) {
   return abs(fract(s));
 }
 
+
+vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, int material, float dist, float altitude) {
+  float fog = min(1.0, dist / MAX_DIST);
+  fog *= fog * fog;
+
+  vec3 K_a = vec3(0.0);
+  vec3 K_d = vec3(0.0);
+  vec3 K_s = vec3(0.0);
+  float shininess = 10.0;
+
+  if (material == MATERIAL_SEA) {
+    float r = 0.5 + 0.5 * sin((p.x + p.z) * (p.x + p.y) *  (p.y + p.z) * 10.0);
+    K_a = vec3(r * 0.15, r * 0.2, r * 0.5);
+    K_d = vec3(0.0, r * 0.5, r);
+    K_s = vec3(1.0, 1.0, 1.0);
+    shininess = 10.0;
+  } else {
+    K_a = vec3(0.02, 0.02, 0.05);
+    K_d = vec3(0.2, 0.25, 0.0);
+    K_s = vec3(1.0, 0.9, 0.8);
+    shininess = max(10.0, 1000.0 - _T * 10.0);
+  }
+
+  float lightTime = _T - 8.0;
+  K_a *= clamp(0.0, lightTime * 0.5, 1.0);
+  K_d *= clamp(0.0, lightTime * 0.25, 1.0);
+  K_s *= clamp(0.0, lightTime * 0.125, 1.0);
+
+  vec3 bodyColor = phongIllumination(K_a, K_d, K_s, shininess, p, eye);
+
+  float red = min(1.0, fog * _T * 0.07);
+  return (1.0 - fog) * bodyColor + vec3(red * red, 0.0, 0.0);
+}
+
+
 vec3 postProcess(vec3 color) {
-  color *= 1.1;
+  // color *= 1.1;
   float noiseCoef = rand(color.r + color.g + color.b + _T + _R * 5839.0);
   color = vec3(0.01) + vec3(noiseCoef * 0.03) + color;
   float textFukup = 0.001;
@@ -242,17 +273,18 @@ void main() {
 
     vec3 lightPos = vec3(0.0, max(0.0, (18.9 - _T) / 3.0), 0.0);
 
-    vec3 r = shortestDistanceToSurface(eye, worldDir, lightPos);
+    vec4 r = shortestDistanceToSurface(eye, worldDir, lightPos);
     float dist = r.x;
     float material = r.y;
     float lightDistance = r.z;
+    float altitude = r.w;
 
     if (dist > MAX_DIST - EPSILON) {
     // Didn't hit anything
       color = vec3(0.0, 0.0, 0.0);
     } else {
       vec3 p = eye + dist * worldDir;
-      color = calcMaterial(p, eye, worldDir, int(material), dist);
+      color = calcMaterial(p, eye, worldDir, int(material), dist, altitude);
     }
 
     float b = 1.5 / (lightDistance * lightDistance + 1.0);
