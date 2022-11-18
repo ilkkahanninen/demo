@@ -1,12 +1,13 @@
 {
-  "name": "valomarssi",
+  "name": "muntele",
   "version": "0.1.0",
-  "description": "Baby's first raymarching implementation",
+  "description": "Baby's second raymarching implementation",
   "scripts": {
     "dev": "parcel src/index.html --no-cache",
     "clean": "rm -rf .parcel-cache && rm -rf dist",
     "build": "./build.sh",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "npx http-serve dist"
   },
   "author": "Ilkka Hänninen",
   "license": "ISC",

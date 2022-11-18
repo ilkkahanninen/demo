@@ -33,3 +33,8 @@ cat dist/intermediate/main.min.js >> dist/index.html
 echo '</script>' >> dist/index.html
 
 wc -c dist/index.html
+
+echo Relocate assets...
+
+mv dist/intermediate/*.png dist/
+mv dist/intermediate/*.mp3 dist/
