@@ -3,11 +3,11 @@
 precision highp float;
 //]
 
-const int MAX_MARCHING_STEPS = 64;
+const int MAX_MARCHING_STEPS = 256;
 const float MIN_DIST = 0.0;
 const float MAX_DIST = 15.0;
 const float EPSILON = 0.0001;
-const float STEP_CORRECTION = 1.5; // lower -> better quality, but slower
+const float STEP_CORRECTION = 1.0; // lower -> better quality, but slower
 const float PI = 3.1415;
 
 const vec2 RESOLUTION = vec2(1280, 500);
@@ -21,18 +21,25 @@ out vec4 _OUT;
 const int MATERIAL_DEFAULT = 0;
 const int MATERIAL_SEA = 1;
 
+vec2 sphereUvMap(vec3 d) {
+  float u = 0.5 + atan(d.z, d.x) / PI;
+  float v = 0.5 + asin(d.y) / PI;
+  return vec2(u, v);
+}
+
 // Result structure:
 //  x = distance
 //  y = material
-//  z = unused
-//  w = unused
+//  z = u coordinate
+//  w = v coordinate
 
-float sphere(vec3 samplePoint) {
-  return length(samplePoint) - 1.0;
+vec4 sphere(vec3 samplePoint) {
+  vec3 d = normalize(samplePoint);
+  return vec4(length(samplePoint) - 1.0, 0.0, sphereUvMap(d));
 }
 
 vec4 render(vec3 p) {
-  return vec4(sphere(p), 0., 0., 0.);
+  return sphere(p);
 }
 
 vec4 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection) {
@@ -124,9 +131,13 @@ vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 e
   return ambientColor + light1;
 }
 
-vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, int material) {
-  vec3 K_a = vec3(0.1, 0.1, 0.1);
-  vec3 K_d = vec3(0.0, 0.5, 0.0);
+vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, vec4 hitInfo) {
+  float c1 = int((hitInfo.z) * 100.0) % 2 == 0 ? 1.0 : 0.0;
+  float c2 = int((hitInfo.w) * 100.0) % 2 == 0 ? 1.0 : 0.0;
+  float c = abs(c1 - c2);
+
+  vec3 K_a = vec3(c * 0.2);
+  vec3 K_d = vec3(c);
   vec3 K_s = vec3(1.0, 1.0, 1.0);
   float shininess = 10.0;
 
@@ -165,16 +176,14 @@ void main() {
   mat4 viewToWorld = viewMatrix(eye, lookAt, up);
   vec3 worldDir = (viewToWorld * vec4(viewDir, 0.0)).xyz;
 
-  vec4 r = shortestDistanceToSurface(eye, worldDir);
-  float dist = r.x;
-  float material = r.y;
+  vec4 hitInfo = shortestDistanceToSurface(eye, worldDir);
 
-  if (dist > MAX_DIST - EPSILON) {
+  if (hitInfo.x > MAX_DIST - EPSILON) {
     // Didn't hit anything
     color = vec3(0.0, 0.0, 0.0);
   } else {
-    vec3 p = eye + dist * worldDir;
-    color = calcMaterial(p, eye, worldDir, int(material));
+    vec3 p = eye + hitInfo.x * worldDir;
+    color = calcMaterial(p, eye, worldDir, hitInfo);
   }
 
   _OUT = vec4(postProcess(color), 1.0);
