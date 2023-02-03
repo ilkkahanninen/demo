@@ -70,9 +70,9 @@ Promise.all([loadTextures(gl) /* loadAudio() */]).then(
 
     let vertexPos = gl.getAttribLocation(program, "_VERTEX_POS");
     let texturePos = gl.getAttribLocation(program, "_TEXTURE_POS");
-    let timeUniform = gl.getUniformLocation(program, "_TIME");
-    let sampler = gl.getUniformLocation(program, "_SAMPLER");
-    let random = gl.getUniformLocation(program, "_RANDOM");
+    let timeUniform = gl.getUniformLocation(program, "TIME");
+    let sampler = gl.getUniformLocation(program, "SAMPLER");
+    let random = gl.getUniformLocation(program, "RANDOM");
     let startTime = 0;
     let prevTime = 0;
 

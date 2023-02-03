@@ -1,7 +1,27 @@
-const images = [
-  new URL("10-credits.png", import.meta.url),
-  new URL("warning.png", import.meta.url),
+const images: URL[] = [];
+
+const materials: MaterialURL[] = [
+  {
+    albedo: new URL("metal_0004_albedo.jpg", import.meta.url),
+    metallic: new URL("metal_0004_metallic.jpg", import.meta.url),
+    roughness: new URL("metal_0004_roughness.jpg", import.meta.url),
+    ao: new URL("metal_0004_ao.jpg", import.meta.url),
+  },
 ];
+
+type MaterialURL = {
+  albedo: URL;
+  metallic: URL;
+  roughness: URL;
+  ao: URL;
+};
+
+type MaterialTextures = {
+  albedo: WebGLTexture;
+  metallic: WebGLTexture;
+  roughness: WebGLTexture;
+  ao: WebGLTexture;
+};
 
 type ImageScript = {
   index: number;
@@ -45,6 +65,18 @@ const loadTexture =
       }
     });
   };
+
+export const loadMaterial =
+  (gl: WebGL2RenderingContext) =>
+  async (url: MaterialURL): Promise<MaterialTextures> => {
+    const load = loadTexture(gl);
+    return {
+      albedo: await load(url.albedo),
+      metallic: await load(url.metallic),
+      roughness: await load(url.roughness),
+      ao: await load(url.ao),
+    };
+  }; // TODO: Jatka näiden tekstuurien viennissä shaderille
 
 export const loadTextures = (gl: WebGL2RenderingContext) =>
   Promise.all(images.map(loadTexture(gl)));

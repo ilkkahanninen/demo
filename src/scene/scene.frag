@@ -8,18 +8,13 @@ const float MIN_DIST = 0.0;
 const float MAX_DIST = 15.0;
 const float EPSILON = 0.0001;
 const float STEP_CORRECTION = 1.0; // lower -> better quality, but slower
-const float PI = 3.1415;
+const float PI = 3.14159265359;
 
 const vec2 RESOLUTION = vec2(1280, 500);
 
-in vec2 textureCoord;
-uniform float _TIME;
-uniform float _RANDOM;
-uniform sampler2D _SAMPLER;
-out vec4 _OUT;
+out vec4 FRAG_COLOR;
 
-const int MATERIAL_DEFAULT = 0;
-const int MATERIAL_SEA = 1;
+uniform float TIME;
 
 vec2 sphereUvMap(vec3 d) {
   float u = 0.5 + atan(d.z, d.x) / PI;
@@ -68,67 +63,86 @@ vec3 estimateNormal(vec3 p) {
   return normalize(vec3(render(vec3(p.x + EPSILON, p.y, p.z)).x - render(vec3(p.x - EPSILON, p.y, p.z)).x, render(vec3(p.x, p.y + EPSILON, p.z)).x - render(vec3(p.x, p.y - EPSILON, p.z)).x, render(vec3(p.x, p.y, p.z + EPSILON)).x - render(vec3(p.x, p.y, p.z - EPSILON)).x));
 }
 
-/**
- * Lighting contribution of a single point light source via Phong illumination.
- * 
- * The vec3 returned is the RGB color of the light's contribution.
- *
- * k_a: Ambient color
- * k_d: Diffuse color
- * k_s: Specular color
- * alpha: Shininess coefficient
- * p: position of point being lit
- * eye: the position of the camera
- * lightPos: the position of the light
- * lightIntensity: color/intensity of the light
- *
- * See https://en.wikipedia.org/wiki/Phong_reflection_model#Description
- */
-vec3 phongContribForLight(vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye, vec3 lightPos, vec3 lightIntensity) {
-  vec3 N = estimateNormal(p);
-  vec3 L = normalize(lightPos - p);
-  vec3 V = normalize(eye - p);
-  vec3 R = normalize(reflect(-L, N));
-
-  float dotLN = dot(L, N);
-  float dotRV = dot(R, V);
-
-  if (dotLN < 0.0) {
-    // Light not visible from this point on the surface
-    return vec3(0.0, 0.0, 0.0);
-  }
-
-  if (dotRV < 0.0) {
-    // Light reflection in opposite direction as viewer, apply only diffuse
-    // component
-    return lightIntensity * (k_d * dotLN);
-  }
-  return lightIntensity * (k_d * dotLN + k_s * pow(dotRV, alpha));
+vec3 fresnelSchlick(float cosTheta, vec3 F0) {
+  return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
-/**
- * Lighting via Phong illumination.
- * 
- * The vec3 returned is the RGB color of that point after lighting is applied.
- * k_a: Ambient color
- * k_d: Diffuse color
- * k_s: Specular color
- * alpha: Shininess coefficient
- * p: position of point being lit
- * eye: the position of the camera
- *
- * See https://en.wikipedia.org/wiki/Phong_reflection_model#Description
- */
-vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye) {
-  const vec3 ambientLight = vec3(0.5, 0.5, 0.5);
-  vec3 ambientColor = ambientLight * k_a;
+float distributionGGX(vec3 N, vec3 H, float roughness) {
+  float a = roughness * roughness;
+  float a2 = a * a;
+  float NdotH = max(dot(N, H), 0.0);
+  float NdotH2 = NdotH * NdotH;
 
-  float pos = min(1.0, _TIME * 0.1);
-  vec3 light1Pos = (1.0 - pos) * vec3(1.3 * sin(_TIME), 0.21 - 0.1 * cos(_TIME * 0.1), 1.3 * cos(_TIME));
-  vec3 light1Intensity = vec3(1.0, 1.0, 1.0);
-  vec3 light1 = phongContribForLight(k_d, k_s, alpha, p, eye, light1Pos, light1Intensity);
+  float num = a2;
+  float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+  denom = PI * denom * denom;
 
-  return ambientColor + light1;
+  return num / denom;
+}
+
+float geometryShlickGGX(float NdotV, float roughness) {
+  float r = roughness + 1.0;
+  float k = (r * r) / 8.0;
+
+  float num = NdotV;
+  float denom = NdotV * (1.0 - k) + k;
+
+  return num / denom;
+}
+
+float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
+  float NdotV = max(dot(N, V), 0.0);
+  float NdotL = max(dot(N, L), 0.0);
+
+  float ggx1 = geometryShlickGGX(NdotL, roughness);
+  float ggx2 = geometryShlickGGX(NdotV, roughness);
+
+  return ggx1 * ggx2;
+}
+
+vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughness, float ambientOcclusion) {
+  vec3 N = estimateNormal(p);
+  vec3 V = normalize(eye - p);
+
+  vec3 lightColorSum = vec3(0.0);
+
+  for (int i = 0; i < 1; i++) {
+    vec3 lightPos = eye / 2.0 + vec3(sin(TIME * 20.0) * 2.0, cos(TIME * 19.0) * 2.0, 0.0); //vec3(11.3 * sin(TIME), 0.21 - 0.1 * cos(TIME * 0.1), 1.3 * cos(TIME));
+    vec3 lightColor = vec3(10.0, 9.0, 8.0);
+
+    vec3 L = normalize(lightPos - p);
+    vec3 H = normalize(V + L);
+
+    float distance = length(lightPos - p);
+    float attenuation = 1.0 / (distance * distance);
+    vec3 radiance = lightColor * attenuation;
+
+    // Calculate the ratio between specular and diffuse reflection
+    vec3 F0 = vec3(0.04); // most dielectric surfaces look visually correct with a constant F0 of 0.04
+    F0 = mix(F0, albedo, metallic);
+    vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+    // Calculate distribution
+    float NDF = distributionGGX(N, H, roughness);
+    float G = geometrySmith(N, V, L, roughness);
+
+    // Calculate specular
+    vec3 specularNum = NDF * G * F;
+    float specularDenom = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+    vec3 specular = specularNum / specularDenom;
+
+    vec3 kSpecular = F;
+    vec3 kDiffuse = vec3(1.0) - kSpecular;
+    kDiffuse *= 1.0 - metallic;
+
+    float NdotL = max(dot(N, L), 0.0);
+    lightColorSum += (kDiffuse * albedo / PI + specular) * radiance * NdotL;
+  }
+
+  vec3 ambient = vec3(0.03) * albedo * ambientOcclusion;
+  vec3 color = ambient + lightColorSum;
+
+  return color;
 }
 
 vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, vec4 hitInfo) {
@@ -136,12 +150,19 @@ vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, vec4 hitInfo) {
   float c2 = int((hitInfo.w) * 100.0) % 2 == 0 ? 1.0 : 0.0;
   float c = abs(c1 - c2);
 
-  vec3 K_a = vec3(c * 0.2);
-  vec3 K_d = vec3(c);
-  vec3 K_s = vec3(1.0, 1.0, 1.0);
-  float shininess = 10.0;
+  // vec3 K_a = vec3(c * 0.2);
+  // vec3 K_d = vec3(c);
+  // vec3 K_s = vec3(1.0, 1.0, 1.0);
+  // float shininess = 10.0;
 
-  return phongIllumination(K_a, K_d, K_s, shininess, p, eye);
+  // return phongIllumination(K_a, K_d, K_s, shininess, p, eye);
+
+  vec3 albedo = vec3(1.0, 0.8, 0.0);
+  float metallic = c;
+  float roughness = c;
+  float ambientOcclusion = 0.1;
+
+  return pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion);
 }
 
 vec3 rayDirection(float fieldOfView, vec2 size, vec2 fragCoord) {
@@ -168,8 +189,8 @@ void main() {
 
   vec3 viewDir = rayDirection(90.0, RESOLUTION.xy, gl_FragCoord.xy);
 
-  vec3 eye = vec3(2.3 * sin(_TIME), 0.21 - 0.1 * cos(_TIME * 0.1) + _TIME * 0.05, 1.3 * cos(_TIME));
-  vec3 up = vec3(sin(_TIME), 2.0 + cos(_TIME * 1.1), sin(_TIME * 1.7));
+  vec3 eye = vec3(2.3 * sin(TIME), 0.21 - 0.1 * cos(TIME * 0.1) + TIME * 0.05, 1.3 * cos(TIME));
+  vec3 up = vec3(sin(TIME), 2.0 + cos(TIME * 1.1), sin(TIME * 1.7));
   up /= length(up);
   vec3 lookAt = vec3(0.0, 0.0, 0.0);
 
@@ -186,5 +207,5 @@ void main() {
     color = calcMaterial(p, eye, worldDir, hitInfo);
   }
 
-  _OUT = vec4(postProcess(color), 1.0);
+  FRAG_COLOR = vec4(postProcess(color), 1.0);
 }
