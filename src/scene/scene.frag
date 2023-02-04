@@ -5,7 +5,7 @@ precision highp float;
 
 const int MAX_MARCHING_STEPS = 256;
 const float MIN_DIST = 0.0;
-const float MAX_DIST = 3.0;
+const float MAX_DIST = 6.0;
 const float EPSILON = 0.0001;
 const float STEP_CORRECTION = 1.0; // lower -> better quality, but slower
 const float PI = 3.14159265359;
@@ -26,50 +26,61 @@ vec2 sphereUvMap(vec3 d) {
   return vec2(u, v);
 }
 
-// Result structure:
-//  x = distance
-//  y = material
-//  z = u coordinate
-//  w = v coordinate
+struct result {
+  float dist;
+  vec2 uv;
+};
 
-vec4 sphere(vec3 samplePoint) {
-  vec3 d = vec3(0.0);
+result sphere(vec3 samplePoint) {
+  vec3 d = normalize(samplePoint);
   float distance = length(samplePoint) - 1.0;
-  if (distance < EPSILON) {
-    vec3 d = normalize(samplePoint);
-    return vec4(distance, 0.0, sphereUvMap(d));
-  }
-  return vec4(distance, 0.0, 0.0, 0.0);
+  return result(distance, sphereUvMap(d));
 }
 
-vec4 render(vec3 p) {
-  return sphere(p);
+float smMin(float a, float b, float k) {
+  float i_h = max(k - abs(a - b), 0.0);
+  return min(a, b) - i_h * i_h * 0.25 / k;
 }
 
-vec4 shortestDistanceToSurface(vec3 eye, vec3 marchingDirection) {
+//    |    *            |
+// a  0                 x
+// b  x                 0
+//         ^- 
+
+result smoothUnion(result a, result b, float k) {
+  float dist = smMin(a.dist, b.dist, k);
+  return result(dist, a.uv);
+}
+
+result render(vec3 p) {
+  vec3 p1 = p - 1.5 * vec3(cos(TIME * 2.0), 0.0, 0.0);
+  vec3 p2 = p + 1.5 * vec3(cos(TIME * 2.0), 0.0, 0.0);
+  return smoothUnion(sphere(p1), sphere(p2), 0.3);
+}
+
+result shortestDistanceToSurface(vec3 eye, vec3 marchingDirection) {
   float depth = MIN_DIST;
   for (int i = 0; i < MAX_MARCHING_STEPS; i++) {
     vec3 p = eye + depth * marchingDirection;
-    vec4 r = render(p);
-    float dist = r.x;
-    if (dist < EPSILON) {
-      r.x = depth;
+    result r = render(p);
+    if (r.dist < EPSILON) {
+      r.dist = depth;
       return r;
     }
-    depth += dist * STEP_CORRECTION;
+    depth += r.dist * STEP_CORRECTION;
     if (depth >= MAX_DIST) {
-      r.x = MAX_DIST;
+      r.dist = MAX_DIST;
       return r;
     }
   }
-  return vec4(MAX_DIST, 0.0, -1, 0.0);
+  return result(MAX_DIST, vec2(0.0));
 }
 
 /**
  * Using the gradient of the SDF, estimate the normal on the surface at point p.
  */
 vec3 estimateNormal(vec3 p) {
-  return normalize(vec3(render(vec3(p.x + EPSILON, p.y, p.z)).x - render(vec3(p.x - EPSILON, p.y, p.z)).x, render(vec3(p.x, p.y + EPSILON, p.z)).x - render(vec3(p.x, p.y - EPSILON, p.z)).x, render(vec3(p.x, p.y, p.z + EPSILON)).x - render(vec3(p.x, p.y, p.z - EPSILON)).x));
+  return normalize(vec3(render(vec3(p.x + EPSILON, p.y, p.z)).dist - render(vec3(p.x - EPSILON, p.y, p.z)).dist, render(vec3(p.x, p.y + EPSILON, p.z)).dist - render(vec3(p.x, p.y - EPSILON, p.z)).dist, render(vec3(p.x, p.y, p.z + EPSILON)).dist - render(vec3(p.x, p.y, p.z - EPSILON)).dist));
 }
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {
@@ -154,11 +165,11 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
   return color;
 }
 
-vec3 calcMaterial(vec3 p, vec3 eye, vec4 hitInfo) {
-  vec3 albedo = texture(ALBEDO_SAMPLER, hitInfo.zw).rgb;
-  float metallic = texture(METALLIC_SAMPLER, hitInfo.zw).r;
-  float roughness = texture(ROUGHNESS_SAMPLER, hitInfo.zw).r;
-  float ambientOcclusion = texture(AO_SAMPLER, hitInfo.zw).r;
+vec3 calcMaterial(vec3 p, vec3 eye, result r) {
+  vec3 albedo = texture(ALBEDO_SAMPLER, r.uv).rgb;
+  float metallic = texture(METALLIC_SAMPLER, r.uv).r;
+  float roughness = texture(ROUGHNESS_SAMPLER, r.uv).r;
+  float ambientOcclusion = texture(AO_SAMPLER, r.uv).r;
 
   return pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion);
 }
@@ -187,7 +198,7 @@ void main() {
 
   vec3 viewDir = rayDirection(90.0, RESOLUTION.xy, gl_FragCoord.xy);
 
-  vec3 eye = vec3(2.3 * sin(TIME * 4.0), 0.21 - 0.1 * cos(TIME * 0.1) + TIME * 0.05, 1.3 * cos(TIME * 4.0));
+  vec3 eye = vec3(0.0, 2.0, 0.0);// 1.6 * vec3(2.3 * sin(TIME * 4.0), 0.21 - 0.1 * cos(TIME * 0.1) + TIME * 0.05, 1.3 * cos(TIME * 4.0));
   vec3 up = vec3(sin(TIME), 2.0 + cos(TIME * 1.1), sin(TIME * 1.7));
   up /= length(up);
   vec3 lookAt = vec3(0.0, 0.0, 0.0);
@@ -195,13 +206,13 @@ void main() {
   mat4 viewToWorld = viewMatrix(eye, lookAt, up);
   vec3 worldDir = (viewToWorld * vec4(viewDir, 0.0)).xyz;
 
-  vec4 hitInfo = shortestDistanceToSurface(eye, worldDir);
+  result hitInfo = shortestDistanceToSurface(eye, worldDir);
 
-  if (hitInfo.x > MAX_DIST - EPSILON) {
+  if (hitInfo.dist > MAX_DIST - EPSILON) {
     // Didn't hit anything
-    color = vec3(0.0, 0.0, 0.0);
+    color = vec3(.1, 0.1, 0.1);
   } else {
-    vec3 p = eye + hitInfo.x * worldDir;
+    vec3 p = eye + hitInfo.dist * worldDir;
     color = calcMaterial(p, eye, hitInfo);
   }
 
