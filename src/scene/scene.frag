@@ -14,6 +14,7 @@ const vec2 RESOLUTION = vec2(1280, 500);
 
 out vec4 FRAG_COLOR;
 
+uniform sampler2D SAMPLER;
 uniform float TIME;
 
 vec2 sphereUvMap(vec3 d) {

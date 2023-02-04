@@ -66,7 +66,10 @@ const loadTexture =
     });
   };
 
-export const loadMaterial =
+export const loadTextures = (gl: WebGL2RenderingContext) =>
+  Promise.all(images.map(loadTexture(gl)));
+
+export const loadMaterialTextures =
   (gl: WebGL2RenderingContext) =>
   async (url: MaterialURL): Promise<MaterialTextures> => {
     const load = loadTexture(gl);
@@ -77,6 +80,3 @@ export const loadMaterial =
       ao: await load(url.ao),
     };
   }; // TODO: Jatka näiden tekstuurien viennissä shaderille
-
-export const loadTextures = (gl: WebGL2RenderingContext) =>
-  Promise.all(images.map(loadTexture(gl)));

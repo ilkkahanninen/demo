@@ -1,5 +1,7 @@
-import { imageScript, loadTextures } from "./images/index";
-import { loadShader } from "./webgl";
+import { Clock } from "./Clock";
+import { loadTextures } from "./images/index";
+import { Rectangle } from "./Rectangle";
+import { ShaderProgram } from "./ShaderProgram";
 
 let vertShader = require(process.env.NODE_ENV !== "production"
   ? "./scene/scene.vert"
@@ -32,85 +34,48 @@ if (process.env.NODE_ENV !== "production") {
 
 Promise.all([loadTextures(gl) /* loadAudio() */]).then(
   ([textures /*audio*/]) => {
-    let buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    const rect = new Rectangle(gl);
+    const scene = new ShaderProgram(gl, vertShader, fragShader);
 
-    let vertexPositions = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array(vertexPositions),
-      gl.STATIC_DRAW
+    const [vertexPos, texturePos] = scene.vertexAttributes(
+      "VERTEX_POS",
+      "TEXTURE_POS"
     );
+    // const setSampler = scene.sampler("SAMPLER");
 
-    let texturePositions = [1, 0, 0, 0, 1, 1, 0, 1];
-    let textureCoordBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array(texturePositions),
-      gl.STATIC_DRAW
-    );
+    const setTime = scene.float("TIME");
 
-    let vertexShader = loadShader(gl, gl.VERTEX_SHADER, vertShader);
-    let fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fragShader);
+    const clock = new Clock(135);
 
-    let program = gl.createProgram()!;
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
+    const renderNext = () => {
+      const time = clock.seconds();
 
-    if (process.env.NODE_ENV !== "production") {
-      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        throw (
-          "Unable to initialize the shader program: " +
-          gl.getProgramInfoLog(program)
-        );
-      }
-    }
+      rect.bind(vertexPos, texturePos);
+      scene.use();
 
-    let vertexPos = gl.getAttribLocation(program, "_VERTEX_POS");
-    let texturePos = gl.getAttribLocation(program, "_TEXTURE_POS");
-    let timeUniform = gl.getUniformLocation(program, "TIME");
-    let sampler = gl.getUniformLocation(program, "SAMPLER");
-    let random = gl.getUniformLocation(program, "RANDOM");
-    let startTime = 0;
-    let prevTime = 0;
+      setTime(time);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
-    gl.vertexAttribPointer(texturePos, 2, gl.FLOAT, false, 0, 0);
+      // const overlayImage = imageScript.find(
+      //   (s) => s.begin <= timeInSeconds && s.end > timeInSeconds
+      // );
+      // gl.activeTexture(gl.TEXTURE0);
+      // if (overlayImage) {
+      //   gl.enableVertexAttribArray(texturePos);
+      //   gl.bindTexture(gl.TEXTURE_2D, textures[overlayImage.index]);
+      //   gl.uniform1i(sampler, 0);
+      // } else {
+      //   gl.disableVertexAttribArray(texturePos);
+      // }
+      // setSampler(0);
 
-    let renderNext = () => {
-      const time = new Date().getTime() - startTime;
-      prevTime = time;
-      const timeInSeconds = time * 0.001;
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.vertexAttribPointer(vertexPos, 2, gl.FLOAT, false, 0, 0);
-      gl.enableVertexAttribArray(vertexPos);
-      gl.useProgram(program);
-      gl.uniform1f(timeUniform, time * 0.0001);
-      gl.uniform1f(random, Math.random());
-
-      const overlayImage = imageScript.find(
-        (s) => s.begin <= timeInSeconds && s.end > timeInSeconds
-      );
-      gl.activeTexture(gl.TEXTURE0);
-      if (overlayImage) {
-        gl.enableVertexAttribArray(texturePos);
-        gl.bindTexture(gl.TEXTURE_2D, textures[overlayImage.index]);
-        gl.uniform1i(sampler, 0);
-      } else {
-        gl.disableVertexAttribArray(texturePos);
-      }
-
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      rect.render();
 
       requestAnimationFrame(renderNext);
     };
 
     window.onclick = () => {
       // audio.play();
-      startTime = new Date().getTime();
+      clock.reset();
       requestAnimationFrame(renderNext);
       window.onclick = null;
     };
