@@ -28,13 +28,11 @@ vec2 sphereUvMap(vec3 d) {
 
 struct result {
   float dist;
-  vec2 uv;
+  vec3 p; // osumakohta suhteessa objektin keskipisteeseen, käytetään uv-mappaukseen
 };
 
 result sphere(vec3 samplePoint) {
-  vec3 d = normalize(samplePoint);
-  float distance = length(samplePoint) - 1.0;
-  return result(distance, sphereUvMap(d));
+  return result(length(samplePoint) - 1.0, samplePoint);
 }
 
 float smMin(float a, float b, float k) {
@@ -42,19 +40,19 @@ float smMin(float a, float b, float k) {
   return min(a, b) - i_h * i_h * 0.25 / k;
 }
 
-//    |    *            |
-// a  0                 x
-// b  x                 0
-//         ^- 
-
 result smoothUnion(result a, result b, float k) {
   float dist = smMin(a.dist, b.dist, k);
-  return result(dist, a.uv);
+  return result(dist, a.p);
+}
+
+vec3 cameraTargetPos() {
+  return 1.5 * vec3(cos(TIME * 2.0), 0.0, 0.0);
 }
 
 result render(vec3 p) {
-  vec3 p1 = p - 1.5 * vec3(cos(TIME * 2.0), 0.0, 0.0);
-  vec3 p2 = p + 1.5 * vec3(cos(TIME * 2.0), 0.0, 0.0);
+  vec3 t = cameraTargetPos();
+  vec3 p1 = p - t;
+  vec3 p2 = p + t;
   return smoothUnion(sphere(p1), sphere(p2), 0.3);
 }
 
@@ -73,7 +71,7 @@ result shortestDistanceToSurface(vec3 eye, vec3 marchingDirection) {
       return r;
     }
   }
-  return result(MAX_DIST, vec2(0.0));
+  return result(MAX_DIST, vec3(0.0));
 }
 
 /**
@@ -166,10 +164,12 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
 }
 
 vec3 calcMaterial(vec3 p, vec3 eye, result r) {
-  vec3 albedo = texture(ALBEDO_SAMPLER, r.uv).rgb;
-  float metallic = texture(METALLIC_SAMPLER, r.uv).r;
-  float roughness = texture(ROUGHNESS_SAMPLER, r.uv).r;
-  float ambientOcclusion = texture(AO_SAMPLER, r.uv).r;
+  vec2 uv = sphereUvMap(normalize(r.p));
+
+  vec3 albedo = texture(ALBEDO_SAMPLER, uv).rgb;
+  float metallic = texture(METALLIC_SAMPLER, uv).r;
+  float roughness = texture(ROUGHNESS_SAMPLER, uv).r;
+  float ambientOcclusion = texture(AO_SAMPLER, uv).r;
 
   return pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion);
 }
@@ -198,10 +198,10 @@ void main() {
 
   vec3 viewDir = rayDirection(90.0, RESOLUTION.xy, gl_FragCoord.xy);
 
-  vec3 eye = vec3(0.0, 2.0, 0.0);// 1.6 * vec3(2.3 * sin(TIME * 4.0), 0.21 - 0.1 * cos(TIME * 0.1) + TIME * 0.05, 1.3 * cos(TIME * 4.0));
-  vec3 up = vec3(sin(TIME), 2.0 + cos(TIME * 1.1), sin(TIME * 1.7));
+  vec3 eye = 1.6 * vec3(2.3 * cos(TIME * 8.0), cos(TIME * 6.0) + TIME * 0.05, 1.3 * sin(TIME * 8.0));
+  vec3 up = vec3(sin(TIME * 0.1), cos(TIME * .12), sin(TIME * .17));
   up /= length(up);
-  vec3 lookAt = vec3(0.0, 0.0, 0.0);
+  vec3 lookAt = cameraTargetPos();
 
   mat4 viewToWorld = viewMatrix(eye, lookAt, up);
   vec3 worldDir = (viewToWorld * vec4(viewDir, 0.0)).xyz;
