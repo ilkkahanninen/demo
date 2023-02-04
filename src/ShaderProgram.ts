@@ -40,27 +40,33 @@ export class ShaderProgram {
     };
   }
 
+  useSamplers(...names: string[]) {
+    names.forEach((name, index) => {
+      this.sampler(name)(index);
+    });
+  }
+
   sampler(name: string): BindFn<number> {
     const location = this.uniform(name);
     return (value: number) => this.gl.uniform1i(location, value);
   }
 
-  uniform(name: string): WebGLUniformLocation {
+  uniform(name: string): WebGLUniformLocation | null {
     const location = this.gl.getUniformLocation(this.program, name);
     if (location === null) {
-      throw new Error(`Uniform ${name} does not exist`);
+      console.warn(`Uniform ${name} does not exist`);
     }
     return location;
   }
 
-  uniforms(...names: string[]): WebGLUniformLocation[] {
+  uniforms(...names: string[]): (WebGLUniformLocation | null)[] {
     return names.map(this.uniform.bind(this));
   }
 
   vertexAttribute(name: string): number {
     const location = this.gl.getAttribLocation(this.program, name);
     if (location < 0) {
-      throw new Error(`Uniform ${name} does not exist`);
+      console.warn(`Vertex attribute ${name} does not exist`);
     }
     return location;
   }

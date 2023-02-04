@@ -5,7 +5,7 @@ precision highp float;
 
 const int MAX_MARCHING_STEPS = 256;
 const float MIN_DIST = 0.0;
-const float MAX_DIST = 15.0;
+const float MAX_DIST = 3.0;
 const float EPSILON = 0.0001;
 const float STEP_CORRECTION = 1.0; // lower -> better quality, but slower
 const float PI = 3.14159265359;
@@ -21,7 +21,7 @@ uniform sampler2D AO_SAMPLER;
 uniform float TIME;
 
 vec2 sphereUvMap(vec3 d) {
-  float u = 0.5 + atan(d.z, d.x) / PI;
+  float u = 0.5 + atan(d.z, d.x) / (2.0 * PI);
   float v = 0.5 + asin(d.y) / PI;
   return vec2(u, v);
 }
@@ -33,8 +33,13 @@ vec2 sphereUvMap(vec3 d) {
 //  w = v coordinate
 
 vec4 sphere(vec3 samplePoint) {
-  vec3 d = normalize(samplePoint);
-  return vec4(length(samplePoint) - 1.0, 0.0, sphereUvMap(d));
+  vec3 d = vec3(0.0);
+  float distance = length(samplePoint) - 1.0;
+  if (distance < EPSILON) {
+    vec3 d = normalize(samplePoint);
+    return vec4(distance, 0.0, sphereUvMap(d));
+  }
+  return vec4(distance, 0.0, 0.0, 0.0);
 }
 
 vec4 render(vec3 p) {
@@ -110,9 +115,9 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
 
   vec3 lightColorSum = vec3(0.0);
 
-  for (int i = 0; i < 1; i++) {
-    vec3 lightPos = eye / 2.0 + vec3(sin(TIME * 20.0) * 2.0, cos(TIME * 19.0) * 2.0, 0.0); //vec3(11.3 * sin(TIME), 0.21 - 0.1 * cos(TIME * 0.1), 1.3 * cos(TIME));
-    vec3 lightColor = vec3(10.0, 9.0, 8.0);
+  for (int i = 0; i < 12; i++) {
+    vec3 lightPos = 1.2 * vec3(sin(TIME * 2.0 + float(i) * 4.2) * 2.0, cos(TIME * 2.0) * 2.0 + float(i) * 3.1, sin(TIME * 2.0 + float(i) * 3.0) * 2.0);
+    vec3 lightColor = vec3(20.0, 19.0, 18.0);
 
     vec3 L = normalize(lightPos - p);
     vec3 H = normalize(V + L);
@@ -149,18 +154,7 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
   return color;
 }
 
-vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, vec4 hitInfo) {
-  float c1 = int((hitInfo.z) * 100.0) % 2 == 0 ? 1.0 : 0.0;
-  float c2 = int((hitInfo.w) * 100.0) % 2 == 0 ? 1.0 : 0.0;
-  float c = abs(c1 - c2);
-
-  // vec3 K_a = vec3(c * 0.2);
-  // vec3 K_d = vec3(c);
-  // vec3 K_s = vec3(1.0, 1.0, 1.0);
-  // float shininess = 10.0;
-
-  // return phongIllumination(K_a, K_d, K_s, shininess, p, eye);
-
+vec3 calcMaterial(vec3 p, vec3 eye, vec4 hitInfo) {
   vec3 albedo = texture(ALBEDO_SAMPLER, hitInfo.zw).rgb;
   float metallic = texture(METALLIC_SAMPLER, hitInfo.zw).r;
   float roughness = texture(ROUGHNESS_SAMPLER, hitInfo.zw).r;
@@ -193,7 +187,7 @@ void main() {
 
   vec3 viewDir = rayDirection(90.0, RESOLUTION.xy, gl_FragCoord.xy);
 
-  vec3 eye = vec3(2.3 * sin(TIME), 0.21 - 0.1 * cos(TIME * 0.1) + TIME * 0.05, 1.3 * cos(TIME));
+  vec3 eye = vec3(2.3 * sin(TIME * 4.0), 0.21 - 0.1 * cos(TIME * 0.1) + TIME * 0.05, 1.3 * cos(TIME * 4.0));
   vec3 up = vec3(sin(TIME), 2.0 + cos(TIME * 1.1), sin(TIME * 1.7));
   up /= length(up);
   vec3 lookAt = vec3(0.0, 0.0, 0.0);
@@ -208,7 +202,7 @@ void main() {
     color = vec3(0.0, 0.0, 0.0);
   } else {
     vec3 p = eye + hitInfo.x * worldDir;
-    color = calcMaterial(p, eye, worldDir, hitInfo);
+    color = calcMaterial(p, eye, hitInfo);
   }
 
   FRAG_COLOR = vec4(postProcess(color), 1.0);

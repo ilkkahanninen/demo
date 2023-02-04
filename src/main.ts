@@ -37,13 +37,13 @@ const material = getMetal(gl);
 
 waitFor(material).then(() => {
   const rect = new Rectangle(gl);
+
   const scene = new ShaderProgram(gl, vertShader, fragShader);
 
   const [vertexPos, overlayTexturePos] = scene.vertexAttributes(
     "VERTEX_POS",
     "OVERLAY_TEXTURE_POS"
   );
-  // const setSampler = scene.sampler("SAMPLER");
 
   const setTime = scene.float("TIME");
 
@@ -54,6 +54,12 @@ waitFor(material).then(() => {
 
     rect.bind(vertexPos, overlayTexturePos);
     scene.use();
+    scene.useSamplers(
+      "ALBEDO_SAMPLER",
+      "METALLIC_SAMPLER",
+      "ROUGHNESS_SAMPLER",
+      "AO_SAMPLER"
+    );
     setTime(time);
 
     // setSampler(0);
