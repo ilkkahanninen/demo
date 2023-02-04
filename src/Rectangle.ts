@@ -26,13 +26,21 @@ export class Rectangle {
     );
   }
 
-  bind(vertexPos: number, texturePos: number) {
+  bind(vertexPos: number, overlayTexturePos: number) {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
     this.gl.vertexAttribPointer(vertexPos, 2, this.gl.FLOAT, false, 0, 0);
     this.gl.enableVertexAttribArray(vertexPos);
 
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureCoordBuffer);
-    this.gl.vertexAttribPointer(texturePos, 2, this.gl.FLOAT, false, 0, 0);
+    this.gl.vertexAttribPointer(
+      overlayTexturePos,
+      2,
+      this.gl.FLOAT,
+      false,
+      0,
+      0
+    );
+    this.gl.enableVertexAttribArray(overlayTexturePos);
   }
 
   render() {

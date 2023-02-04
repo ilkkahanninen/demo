@@ -14,7 +14,10 @@ const vec2 RESOLUTION = vec2(1280, 500);
 
 out vec4 FRAG_COLOR;
 
-uniform sampler2D SAMPLER;
+uniform sampler2D ALBEDO_SAMPLER;
+uniform sampler2D METALLIC_SAMPLER;
+uniform sampler2D ROUGHNESS_SAMPLER;
+uniform sampler2D AO_SAMPLER;
 uniform float TIME;
 
 vec2 sphereUvMap(vec3 d) {
@@ -158,10 +161,10 @@ vec3 calcMaterial(vec3 p, vec3 eye, vec3 worldDir, vec4 hitInfo) {
 
   // return phongIllumination(K_a, K_d, K_s, shininess, p, eye);
 
-  vec3 albedo = vec3(1.0, 0.8, 0.0);
-  float metallic = c;
-  float roughness = c;
-  float ambientOcclusion = 0.1;
+  vec3 albedo = texture(ALBEDO_SAMPLER, hitInfo.zw).rgb;
+  float metallic = texture(METALLIC_SAMPLER, hitInfo.zw).r;
+  float roughness = texture(ROUGHNESS_SAMPLER, hitInfo.zw).r;
+  float ambientOcclusion = texture(AO_SAMPLER, hitInfo.zw).r;
 
   return pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion);
 }

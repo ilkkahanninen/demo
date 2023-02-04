@@ -1,6 +1,7 @@
 import { Clock } from "./Clock";
-import { loadTextures } from "./images/index";
+import { getMetal } from "./materials/metal/Metal";
 import { Rectangle } from "./Rectangle";
+import { waitFor } from "./Resource";
 import { ShaderProgram } from "./ShaderProgram";
 
 let vertShader = require(process.env.NODE_ENV !== "production"
@@ -32,52 +33,44 @@ if (process.env.NODE_ENV !== "production") {
   }
 }
 
-Promise.all([loadTextures(gl) /* loadAudio() */]).then(
-  ([textures /*audio*/]) => {
-    const rect = new Rectangle(gl);
-    const scene = new ShaderProgram(gl, vertShader, fragShader);
+const material = getMetal(gl);
 
-    const [vertexPos, texturePos] = scene.vertexAttributes(
-      "VERTEX_POS",
-      "TEXTURE_POS"
-    );
-    // const setSampler = scene.sampler("SAMPLER");
+waitFor(material).then(() => {
+  const rect = new Rectangle(gl);
+  const scene = new ShaderProgram(gl, vertShader, fragShader);
 
-    const setTime = scene.float("TIME");
+  const [vertexPos, overlayTexturePos] = scene.vertexAttributes(
+    "VERTEX_POS",
+    "OVERLAY_TEXTURE_POS"
+  );
+  // const setSampler = scene.sampler("SAMPLER");
 
-    const clock = new Clock(135);
+  const setTime = scene.float("TIME");
 
-    const renderNext = () => {
-      const time = clock.seconds();
+  const clock = new Clock(135);
 
-      rect.bind(vertexPos, texturePos);
-      scene.use();
+  const renderNext = () => {
+    const time = clock.seconds();
 
-      setTime(time);
+    rect.bind(vertexPos, overlayTexturePos);
+    scene.use();
+    setTime(time);
 
-      // const overlayImage = imageScript.find(
-      //   (s) => s.begin <= timeInSeconds && s.end > timeInSeconds
-      // );
-      // gl.activeTexture(gl.TEXTURE0);
-      // if (overlayImage) {
-      //   gl.enableVertexAttribArray(texturePos);
-      //   gl.bindTexture(gl.TEXTURE_2D, textures[overlayImage.index]);
-      //   gl.uniform1i(sampler, 0);
-      // } else {
-      //   gl.disableVertexAttribArray(texturePos);
-      // }
-      // setSampler(0);
+    // setSampler(0);
+    material.albedo.use(gl.TEXTURE0);
+    material.metallic.use(gl.TEXTURE1);
+    material.roughness.use(gl.TEXTURE2);
+    material.ao.use(gl.TEXTURE3);
 
-      rect.render();
+    rect.render();
 
-      requestAnimationFrame(renderNext);
-    };
+    requestAnimationFrame(renderNext);
+  };
 
-    window.onclick = () => {
-      // audio.play();
-      clock.reset();
-      requestAnimationFrame(renderNext);
-      window.onclick = null;
-    };
-  }
-);
+  window.onclick = () => {
+    // audio.play();
+    clock.reset();
+    requestAnimationFrame(renderNext);
+    window.onclick = null;
+  };
+});
