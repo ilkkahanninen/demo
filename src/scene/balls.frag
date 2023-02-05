@@ -5,7 +5,7 @@ precision highp float;
 
 const int MAX_MARCHING_STEPS = 256;
 const float MIN_DIST = 0.0;
-const float MAX_DIST = 6.0;
+const float MAX_DIST = 50.0;
 const float EPSILON = 0.0001;
 const float STEP_CORRECTION = 1.0; // lower -> better quality, but slower
 const float PI = 3.14159265359;
@@ -24,19 +24,20 @@ uniform vec3 CAMERA_POS;
 uniform vec3 CAMERA_LOOKAT;
 uniform vec3 CAMERA_UP;
 
-vec2 sphereUvMap(vec3 d) {
-  float u = 0.5 + atan(d.z, d.x) / (2.0 * PI);
-  float v = 0.5 + asin(d.y) / PI;
-  return vec2(u, v);
-}
+const int OUT_OF_VIEW = -1;
+const int SPHERE = 0;
+const int TUNNEL = 1;
 
 struct result {
   float dist;
   vec3 p; // osumakohta suhteessa objektin keskipisteeseen, käytetään uv-mappaukseen
+  int kind;
 };
 
+// Pallot
+
 result sphere(vec3 samplePoint) {
-  return result(length(samplePoint) - 1.0, samplePoint);
+  return result(length(samplePoint) - 1.0, samplePoint, SPHERE);
 }
 
 float smMin(float a, float b, float k) {
@@ -46,13 +47,32 @@ float smMin(float a, float b, float k) {
 
 result smoothUnion(result a, result b, float k) {
   float dist = smMin(a.dist, b.dist, k);
-  return result(dist, a.p);
+  return result(dist, a.p, a.kind);
+}
+
+// Tunneli
+
+result tunnel(vec3 p) {
+  float d = -length(p.xz) + 5.0;
+  float distort = 0.05 * sin(p.y * 5.0);
+  return result(d + distort, p, TUNNEL);
+}
+
+result opUnion(result a, result b) {
+  if (a.dist < b.dist) {
+    return a;
+  }
+  return b;
 }
 
 result render(vec3 p) {
   vec3 p1 = p - CAMERA_LOOKAT;
   vec3 p2 = p + CAMERA_LOOKAT;
-  return smoothUnion(sphere(p1), sphere(p2), 0.3);
+
+  result balls = smoothUnion(sphere(p1), sphere(p2), 0.3);
+  result env = tunnel(p);
+
+  return opUnion(balls, env);
 }
 
 result shortestDistanceToSurface(vec3 eye, vec3 marchingDirection) {
@@ -70,7 +90,7 @@ result shortestDistanceToSurface(vec3 eye, vec3 marchingDirection) {
       return r;
     }
   }
-  return result(MAX_DIST, vec3(0.0));
+  return result(MAX_DIST, vec3(0.0), OUT_OF_VIEW);
 }
 
 /**
@@ -162,15 +182,43 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
   return color;
 }
 
+vec2 sphereUvMap(vec3 d) {
+  float u = 0.5 + atan(d.z, d.x) / (2.0 * PI);
+  float v = 0.5 + asin(d.y) / PI;
+  return vec2(u, v);
+}
+
+vec2 tunnelUvMap(vec3 p) {
+  vec3 d = normalize(p);
+  float u = 0.5 + atan(d.z, d.x) / (2.0 * PI);
+  return vec2(u, p.y * 0.05);
+}
+
 vec3 calcMaterial(vec3 p, vec3 eye, result r) {
-  vec2 uv = sphereUvMap(normalize(r.p));
+  if (r.kind == SPHERE) {
+    vec2 uv = sphereUvMap(normalize(r.p));
 
-  vec3 albedo = texture(ALBEDO_SAMPLER, uv).rgb;
-  float metallic = texture(METALLIC_SAMPLER, uv).r;
-  float roughness = texture(ROUGHNESS_SAMPLER, uv).r;
-  float ambientOcclusion = texture(AO_SAMPLER, uv).r;
+    vec3 albedo = texture(ALBEDO_SAMPLER, uv).rgb;
+    float metallic = texture(METALLIC_SAMPLER, uv).r;
+    float roughness = texture(ROUGHNESS_SAMPLER, uv).r;
+    float ambientOcclusion = texture(AO_SAMPLER, uv).r;
 
-  return pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion);
+    return pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion);
+  }
+
+  if (r.kind == TUNNEL) {
+    vec2 uv = tunnelUvMap(r.p);
+
+    vec3 albedo = texture(ALBEDO_SAMPLER, uv).rgb;
+    float metallic = texture(METALLIC_SAMPLER, uv).r;
+    float roughness = texture(ROUGHNESS_SAMPLER, uv).r;
+    float ambientOcclusion = texture(AO_SAMPLER, uv).r;
+
+    return pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion);
+
+  }
+
+  return vec3(1.0);
 }
 
 vec3 rayDirection(float fieldOfView, vec2 size, vec2 fragCoord) {
