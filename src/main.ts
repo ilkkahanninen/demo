@@ -33,8 +33,11 @@ if (process.env.NODE_ENV !== "production") {
   }
 }
 
-const material = getMetal(gl);
-const framebuffer = new FrameBuffer(gl, 128, 72);
+const framebuffer = new FrameBuffer(
+  gl,
+  config.canvas.width,
+  config.canvas.height
+);
 
 waitFor(material).then(() => {
   const rect = new Rectangle(gl);
