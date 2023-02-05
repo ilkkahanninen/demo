@@ -20,6 +20,10 @@ uniform sampler2D ROUGHNESS_SAMPLER;
 uniform sampler2D AO_SAMPLER;
 uniform float TIME;
 
+uniform vec3 CAMERA_POS;
+uniform vec3 CAMERA_LOOKAT;
+uniform vec3 CAMERA_UP;
+
 vec2 sphereUvMap(vec3 d) {
   float u = 0.5 + atan(d.z, d.x) / (2.0 * PI);
   float v = 0.5 + asin(d.y) / PI;
@@ -45,14 +49,9 @@ result smoothUnion(result a, result b, float k) {
   return result(dist, a.p);
 }
 
-vec3 cameraTargetPos() {
-  return 1.5 * vec3(cos(TIME * 2.0), 0.0, 0.0);
-}
-
 result render(vec3 p) {
-  vec3 t = cameraTargetPos();
-  vec3 p1 = p - t;
-  vec3 p2 = p + t;
+  vec3 p1 = p - CAMERA_LOOKAT;
+  vec3 p2 = p + CAMERA_LOOKAT;
   return smoothUnion(sphere(p1), sphere(p2), 0.3);
 }
 
@@ -198,22 +197,17 @@ void main() {
 
   vec3 viewDir = rayDirection(90.0, RESOLUTION.xy, gl_FragCoord.xy);
 
-  vec3 eye = 1.6 * vec3(2.3 * cos(TIME * 8.0), cos(TIME * 6.0) + TIME * 0.05, 1.3 * sin(TIME * 8.0));
-  vec3 up = vec3(sin(TIME * 0.1), cos(TIME * .12), sin(TIME * .17));
-  up /= length(up);
-  vec3 lookAt = cameraTargetPos();
-
-  mat4 viewToWorld = viewMatrix(eye, lookAt, up);
+  mat4 viewToWorld = viewMatrix(CAMERA_POS, CAMERA_LOOKAT, CAMERA_UP);
   vec3 worldDir = (viewToWorld * vec4(viewDir, 0.0)).xyz;
 
-  result hitInfo = shortestDistanceToSurface(eye, worldDir);
+  result hitInfo = shortestDistanceToSurface(CAMERA_POS, worldDir);
 
   if (hitInfo.dist > MAX_DIST - EPSILON) {
     // Didn't hit anything
     color = vec3(.1, 0.1, 0.1);
   } else {
-    vec3 p = eye + hitInfo.dist * worldDir;
-    color = calcMaterial(p, eye, hitInfo);
+    vec3 p = CAMERA_POS + hitInfo.dist * worldDir;
+    color = calcMaterial(p, CAMERA_POS, hitInfo);
   }
 
   FRAG_COLOR = vec4(postProcess(color), 1.0);

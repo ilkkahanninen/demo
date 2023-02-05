@@ -1,6 +1,5 @@
+import { Vec3 } from "./vectors";
 import { loadShader } from "./webgl";
-
-export type BindFn<T> = (value: T) => void;
 
 export class ShaderProgram {
   gl: WebGL2RenderingContext;
@@ -33,10 +32,17 @@ export class ShaderProgram {
     this.gl.useProgram(this.program);
   }
 
-  float(name: string): BindFn<number> {
+  float(name: string) {
     const location = this.uniform(name);
     return (value: number) => {
       return this.gl.uniform1f(location, value);
+    };
+  }
+
+  vec3(name: string) {
+    const location = this.uniform(name);
+    return (v: Vec3) => {
+      return this.gl.uniform3f(location, ...v);
     };
   }
 
@@ -46,7 +52,7 @@ export class ShaderProgram {
     });
   }
 
-  sampler(name: string): BindFn<number> {
+  sampler(name: string) {
     const location = this.uniform(name);
     return (value: number) => this.gl.uniform1i(location, value);
   }

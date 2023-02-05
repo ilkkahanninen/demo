@@ -3,6 +3,7 @@ import { getMetal } from "./materials/metal/Metal";
 import { Rectangle } from "./Rectangle";
 import { waitFor } from "./Resource";
 import { ShaderProgram } from "./ShaderProgram";
+import { normalize, vec3 } from "./vectors";
 
 let vertShader = require(process.env.NODE_ENV !== "production"
   ? "./scene/scene.vert"
@@ -46,6 +47,9 @@ waitFor(material).then(() => {
   );
 
   const setTime = scene.float("TIME");
+  const setCameraPos = scene.vec3("CAMERA_POS");
+  const setCameraLookAt = scene.vec3("CAMERA_LOOKAT");
+  const setCameraUp = scene.vec3("CAMERA_UP");
 
   const clock = new Clock(135);
 
@@ -60,7 +64,22 @@ waitFor(material).then(() => {
       "ROUGHNESS_SAMPLER",
       "AO_SAMPLER"
     );
+
     setTime(time);
+
+    setCameraPos(
+      vec3(
+        1.6 * 2.3 * Math.cos(time * 8.0),
+        1.6 * Math.cos(time * 6.0),
+        1.6 * 1.3 * Math.sin(time * 8.0)
+      )
+    );
+    setCameraUp(
+      normalize(
+        vec3(Math.sin(time * 0.1), Math.cos(time * 0.12), Math.sin(time * 0.17))
+      )
+    );
+    setCameraLookAt(vec3(1.5 * Math.cos(time * 2.0), 0.0, 0.0));
 
     // setSampler(0);
     material.albedo.use(gl.TEXTURE0);
