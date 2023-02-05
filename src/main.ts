@@ -5,13 +5,8 @@ import { waitFor } from "./Resource";
 import { ShaderProgram } from "./ShaderProgram";
 import { normalize, vec3 } from "./vectors";
 
-let vertShader = require(process.env.NODE_ENV !== "production"
-  ? "./scene/scene.vert"
-  : "../dist/intermediate/out.min.vert");
-
-let fragShader = require(process.env.NODE_ENV !== "production"
-  ? "./scene/scene.frag"
-  : "../dist/intermediate/out.min.frag");
+import ballsShader from "./scene/balls.frag";
+import defaultVertexShader from "./scene/default.vert";
 
 document.body.style.background = "#000";
 document.body.style.margin = "0";
@@ -39,17 +34,17 @@ const material = getMetal(gl);
 waitFor(material).then(() => {
   const rect = new Rectangle(gl);
 
-  const scene = new ShaderProgram(gl, vertShader, fragShader);
+  const balls = new ShaderProgram(gl, defaultVertexShader, ballsShader);
 
-  const [vertexPos, overlayTexturePos] = scene.vertexAttributes(
+  const [vertexPos, overlayTexturePos] = balls.vertexAttributes(
     "VERTEX_POS",
     "OVERLAY_TEXTURE_POS"
   );
 
-  const setTime = scene.float("TIME");
-  const setCameraPos = scene.vec3("CAMERA_POS");
-  const setCameraLookAt = scene.vec3("CAMERA_LOOKAT");
-  const setCameraUp = scene.vec3("CAMERA_UP");
+  const setTime = balls.float("TIME");
+  const setCameraPos = balls.vec3("CAMERA_POS");
+  const setCameraLookAt = balls.vec3("CAMERA_LOOKAT");
+  const setCameraUp = balls.vec3("CAMERA_UP");
 
   const clock = new Clock(135);
 
@@ -57,8 +52,8 @@ waitFor(material).then(() => {
     const time = clock.seconds();
 
     rect.bind(vertexPos, overlayTexturePos);
-    scene.use();
-    scene.useSamplers(
+    balls.use();
+    balls.useSamplers(
       "ALBEDO_SAMPLER",
       "METALLIC_SAMPLER",
       "ROUGHNESS_SAMPLER",
