@@ -31,7 +31,7 @@ export class Texture {
     });
   }
 
-  use(textureSlot: GLenum) {
+  useAt(textureSlot: GLenum) {
     this.gl.activeTexture(textureSlot);
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
   }

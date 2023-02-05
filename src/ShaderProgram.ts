@@ -4,6 +4,7 @@ import { loadShader } from "./webgl";
 export class ShaderProgram {
   gl: WebGL2RenderingContext;
   program: WebGLProgram;
+  resolutionLocation: number;
 
   constructor(
     gl: WebGL2RenderingContext,
@@ -26,10 +27,16 @@ export class ShaderProgram {
         gl.getProgramInfoLog(this.program)
       );
     }
+
+    this.resolutionLocation = this.vertexAttribute("BUFFER_RESOLUTION");
   }
 
   use() {
     this.gl.useProgram(this.program);
+  }
+
+  setResolution(width: number, height: number) {
+    this.gl.vertexAttrib2f(this.resolutionLocation, width, height);
   }
 
   float(name: string) {

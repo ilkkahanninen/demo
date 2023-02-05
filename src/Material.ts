@@ -30,10 +30,10 @@ export class Material extends Resource {
     this.ao = ao;
   }
 
-  use(firstTextureSlot: GLenum) {
-    this.albedo.use(firstTextureSlot);
-    this.metallic.use(firstTextureSlot + 1);
-    this.roughness.use(firstTextureSlot + 2);
-    this.ao.use(firstTextureSlot + 3);
+  useAt(firstTextureSlot: GLenum) {
+    this.albedo.useAt(firstTextureSlot);
+    this.metallic.useAt(firstTextureSlot + 1);
+    this.roughness.useAt(firstTextureSlot + 2);
+    this.ao.useAt(firstTextureSlot + 3);
   }
 }

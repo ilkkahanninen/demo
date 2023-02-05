@@ -5,8 +5,12 @@ import { waitFor } from "./Resource";
 import { ShaderProgram } from "./ShaderProgram";
 import { normalize, vec3 } from "./vectors";
 
+import { config } from "./config";
+import { FrameBuffer } from "./FrameBuffer";
+import { renderCanvas } from "./FrameContext";
 import ballsShader from "./scene/balls.frag";
 import defaultVertexShader from "./scene/default.vert";
+import postprocessShader from "./scene/postprocess.frag";
 
 document.body.style.background = "#000";
 document.body.style.margin = "0";
@@ -16,8 +20,8 @@ document.body.style.height = "100vh";
 
 let canvas = document.querySelector<HTMLCanvasElement>("canvas")!;
 canvas.style.width = "100%";
-canvas.width = 1280;
-canvas.height = 720;
+canvas.width = config.canvas.width;
+canvas.height = config.canvas.height;
 
 let gl = canvas.getContext("webgl2")!;
 
@@ -30,11 +34,17 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 const material = getMetal(gl);
+const framebuffer = new FrameBuffer(gl, 128, 72);
 
 waitFor(material).then(() => {
   const rect = new Rectangle(gl);
 
   const balls = new ShaderProgram(gl, defaultVertexShader, ballsShader);
+  const postprocess = new ShaderProgram(
+    gl,
+    defaultVertexShader,
+    postprocessShader
+  );
 
   const [vertexPos, overlayTexturePos] = balls.vertexAttributes(
     "VERTEX_POS",
@@ -51,33 +61,47 @@ waitFor(material).then(() => {
   const renderNext = () => {
     const time = clock.seconds();
 
-    rect.bind(vertexPos, overlayTexturePos);
-    balls.use();
-    balls.useSamplers(
-      "ALBEDO_SAMPLER",
-      "METALLIC_SAMPLER",
-      "ROUGHNESS_SAMPLER",
-      "AO_SAMPLER"
-    );
-    material.use(gl.TEXTURE0);
+    // Testi: piirretään framebufferiin
 
-    setTime(time);
+    framebuffer.renderToItself(balls, () => {
+      rect.bind(vertexPos, overlayTexturePos);
+      balls.useSamplers(
+        "ALBEDO_SAMPLER",
+        "METALLIC_SAMPLER",
+        "ROUGHNESS_SAMPLER",
+        "AO_SAMPLER"
+      );
+      material.useAt(gl.TEXTURE0);
 
-    setCameraPos(
-      vec3(
-        1.6 * 2.3 * Math.cos(time * 8.0),
-        1.6 * Math.cos(time * 6.0),
-        1.6 * 1.3 * Math.sin(time * 8.0)
-      )
-    );
-    setCameraUp(
-      normalize(
-        vec3(Math.sin(time * 0.1), Math.cos(time * 0.12), Math.sin(time * 0.17))
-      )
-    );
-    setCameraLookAt(vec3(1.5 * Math.cos(time * 2.0), 0.0, 0.0));
+      setTime(time);
 
-    rect.render();
+      setCameraPos(
+        vec3(
+          1.6 * 2.3 * Math.cos(time * 8.0),
+          1.6 * Math.cos(time * 6.0),
+          1.6 * 1.3 * Math.sin(time * 8.0)
+        )
+      );
+      setCameraUp(
+        normalize(
+          vec3(
+            Math.sin(time * 0.1),
+            Math.cos(time * 0.12),
+            Math.sin(time * 0.17)
+          )
+        )
+      );
+      setCameraLookAt(vec3(1.5 * Math.cos(time * 2.0), 0.0, 0.0));
+
+      rect.render();
+    });
+
+    // Testi: piirretään framebuffer ruudulle
+
+    renderCanvas(postprocess)(() => {
+      framebuffer.useAt(gl.TEXTURE0);
+      rect.render();
+    });
 
     requestAnimationFrame(renderNext);
   };

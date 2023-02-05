@@ -10,8 +10,7 @@ const float EPSILON = 0.0001;
 const float STEP_CORRECTION = 1.0; // lower -> better quality, but slower
 const float PI = 3.14159265359;
 
-const vec2 RESOLUTION = vec2(1280, 500);
-
+in vec2 RESOLUTION;
 out vec4 FRAG_COLOR;
 
 uniform sampler2D ALBEDO_SAMPLER;
