@@ -64,6 +64,7 @@ waitFor(material).then(() => {
       "ROUGHNESS_SAMPLER",
       "AO_SAMPLER"
     );
+    material.use(gl.TEXTURE0);
 
     setTime(time);
 
@@ -80,12 +81,6 @@ waitFor(material).then(() => {
       )
     );
     setCameraLookAt(vec3(1.5 * Math.cos(time * 2.0), 0.0, 0.0));
-
-    // setSampler(0);
-    material.albedo.use(gl.TEXTURE0);
-    material.metallic.use(gl.TEXTURE1);
-    material.roughness.use(gl.TEXTURE2);
-    material.ao.use(gl.TEXTURE3);
 
     rect.render();
 
