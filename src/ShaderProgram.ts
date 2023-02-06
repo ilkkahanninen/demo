@@ -39,6 +39,16 @@ export class ShaderProgram {
     this.gl.vertexAttrib2f(this.resolutionLocation, width, height);
   }
 
+  set(params: object) {
+    Object.entries(params).forEach(([name, value]) => {
+      if (typeof value === "number") {
+        this.float(name)(value);
+      } else if (Array.isArray(value)) {
+        this.vec3(name)(value as Vec3);
+      }
+    });
+  }
+
   float(name: string) {
     const location = this.uniform(name);
     return (value: number) => {
@@ -53,7 +63,8 @@ export class ShaderProgram {
     };
   }
 
-  useSamplers(...names: string[]) {
+  setupSamplers(...names: string[]) {
+    this.use();
     names.forEach((name, index) => {
       this.sampler(name)(index);
     });

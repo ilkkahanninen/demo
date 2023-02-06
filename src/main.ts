@@ -6,11 +6,13 @@ import { ShaderProgram } from "./ShaderProgram";
 import { normalize, vec3 } from "./vectors";
 
 import { config } from "./config";
+import { CubeMapBuffer } from "./CubemapBuffer";
 import { FrameBuffer } from "./FrameBuffer";
 import { renderCanvas } from "./FrameContext";
-import ballsShader from "./scene/balls.frag";
-import defaultVertexShader from "./scene/default.vert";
-import postprocessShader from "./scene/postprocess.frag";
+import defaultVertexSrc from "./scene/default.vert";
+import pallotTunnelissaSrc from "./scene/pallotTunnelissa.frag";
+import pallotTunnelissaEnvSrc from "./scene/pallotTunnelissaEnv.frag";
+import postprocessSrc from "./scene/postprocess.frag";
 
 document.body.style.background = "#000";
 document.body.style.margin = "0";
@@ -33,6 +35,9 @@ if (process.env.NODE_ENV !== "production") {
   }
 }
 
+const material = getMetal(gl);
+
+const environmentMap = new CubeMapBuffer(gl, 512);
 const framebuffer = new FrameBuffer(
   gl,
   config.canvas.width,
@@ -40,14 +45,32 @@ const framebuffer = new FrameBuffer(
 );
 
 waitFor(material).then(() => {
-  const rect = new Rectangle(gl);
+  const screen = new Rectangle(gl);
 
-  const balls = new ShaderProgram(gl, defaultVertexShader, ballsShader);
-  const postprocess = new ShaderProgram(
-    gl,
-    defaultVertexShader,
-    postprocessShader
+  const balls = new ShaderProgram(gl, defaultVertexSrc, pallotTunnelissaSrc);
+
+  balls.setupSamplers(
+    "ALBEDO_SAMPLER",
+    "METALLIC_SAMPLER",
+    "ROUGHNESS_SAMPLER",
+    "AO_SAMPLER",
+    "ENVIRONMENT_SAMPLER"
   );
+
+  const ballsEnv = new ShaderProgram(
+    gl,
+    defaultVertexSrc,
+    pallotTunnelissaEnvSrc
+  );
+
+  ballsEnv.setupSamplers(
+    "ALBEDO_SAMPLER",
+    "METALLIC_SAMPLER",
+    "ROUGHNESS_SAMPLER",
+    "AO_SAMPLER"
+  );
+
+  const postprocess = new ShaderProgram(gl, defaultVertexSrc, postprocessSrc);
 
   const [vertexPos, overlayTexturePos] = balls.vertexAttributes(
     "VERTEX_POS",
@@ -63,18 +86,26 @@ waitFor(material).then(() => {
 
   const renderNext = () => {
     const time = clock.seconds();
+    screen.bind(vertexPos, overlayTexturePos);
+
+    // Rendataan ympäristö kuutioon
+    environmentMap.renderToItself(ballsEnv, (direction, up) => {
+      ballsEnv.set({
+        TIME: time,
+        CAMERA_POS: vec3(0.0, 0.0, 0.0),
+        CAMERA_LOOKAT: direction,
+        CAMERA_UP: up,
+      });
+      // setCameraPos(vec3(0.0, 0.0, 0.0));
+      // setCameraUp(up);
+      // setCameraLookAt(direction);
+      screen.render();
+    });
 
     // Testi: piirretään framebufferiin
-
     framebuffer.renderToItself(balls, () => {
-      rect.bind(vertexPos, overlayTexturePos);
-      balls.useSamplers(
-        "ALBEDO_SAMPLER",
-        "METALLIC_SAMPLER",
-        "ROUGHNESS_SAMPLER",
-        "AO_SAMPLER"
-      );
-      material.useAt(gl.TEXTURE0);
+      material.bindAt(gl.TEXTURE0);
+      environmentMap.bindAt(gl.TEXTURE4);
 
       setTime(time);
 
@@ -96,14 +127,14 @@ waitFor(material).then(() => {
       );
       setCameraLookAt(vec3(1.5 * Math.cos(time * 2.0), 0.0, 0.0));
 
-      rect.render();
+      screen.render();
     });
 
     // Testi: piirretään framebuffer ruudulle
 
     renderCanvas(postprocess)(() => {
       framebuffer.useAt(gl.TEXTURE0);
-      rect.render();
+      screen.render();
     });
 
     requestAnimationFrame(renderNext);

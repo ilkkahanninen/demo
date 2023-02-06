@@ -17,6 +17,7 @@ uniform sampler2D ALBEDO_SAMPLER;
 uniform sampler2D METALLIC_SAMPLER;
 uniform sampler2D ROUGHNESS_SAMPLER;
 uniform sampler2D AO_SAMPLER;
+
 uniform float TIME;
 
 uniform vec3 CAMERA_POS;
@@ -33,45 +34,26 @@ struct result {
   int kind;
 };
 
-// Pallot
-
-result sphere(vec3 samplePoint) {
-  return result(length(samplePoint) - 1.0, samplePoint, SPHERE);
-}
-
-float smMin(float a, float b, float k) {
-  float i_h = max(k - abs(a - b), 0.0);
-  return min(a, b) - i_h * i_h * 0.25 / k;
-}
-
-result smoothUnion(result a, result b, float k) {
-  float dist = smMin(a.dist, b.dist, k);
-  return result(dist, a.p, a.kind);
-}
-
 // Tunneli
 
-result tunnel(vec3 p) {
-  float d = -length(p.xz) + 5.0;
-  float distort = 0.05 * sin(p.y * 5.0);
-  return result(d + distort, p, TUNNEL);
+vec2 tunnelUvMap(vec3 p) {
+  vec3 d = normalize(p);
+  float u = 0.5 + atan(d.z, d.x) / (2.0 * PI);
+  return vec2(u, p.y * 0.05);
 }
 
-result opUnion(result a, result b) {
-  if (a.dist < b.dist) {
-    return a;
-  }
-  return b;
+result tunnel(vec3 p) {
+  p.y += TIME * 8.0;
+  float d = -length(p.xz) + 5.0;
+  // float d2 = -length(p.xz) + 4.97;
+  float wave = 0.05 * sin(p.y * 4.0);
+  float t = d + wave; // max(d + wave, d2);
+
+  return result(t, p, TUNNEL);
 }
 
 result render(vec3 p) {
-  vec3 p1 = p - CAMERA_LOOKAT;
-  vec3 p2 = p + CAMERA_LOOKAT;
-
-  result balls = smoothUnion(sphere(p1), sphere(p2), 0.3);
-  result env = tunnel(p);
-
-  return opUnion(balls, env);
+  return tunnel(p);
 }
 
 result shortestDistanceToSurface(vec3 eye, vec3 marchingDirection) {
@@ -142,7 +124,7 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
 
   vec3 lightColorSum = vec3(0.0);
 
-  for (int i = 0; i < 12; i++) {
+  for (int i = 0; i < 4; i++) {
     vec3 lightPos = 1.2 * vec3(sin(TIME * 2.0 + float(i) * 4.2) * 2.0, cos(TIME * 2.0) * 2.0 + float(i) * 3.1, sin(TIME * 2.0 + float(i) * 3.0) * 2.0);
     vec3 lightColor = vec3(20.0, 19.0, 18.0);
 
@@ -187,12 +169,6 @@ vec2 sphereUvMap(vec3 d) {
   return vec2(u, v);
 }
 
-vec2 tunnelUvMap(vec3 p) {
-  vec3 d = normalize(p);
-  float u = 0.5 + atan(d.z, d.x) / (2.0 * PI);
-  return vec2(u, p.y * 0.05);
-}
-
 vec3 calcMaterial(vec3 p, vec3 eye, result r) {
   if (r.kind == SPHERE) {
     vec2 uv = sphereUvMap(normalize(r.p));
@@ -222,6 +198,7 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
 
 vec3 rayDirection(float fieldOfView, vec2 size, vec2 fragCoord) {
   vec2 i_xy = fragCoord - size / 2.0;
+  i_xy.x *= 1.77778; // aspect ratio
   float i_z = size.y / tan(radians(fieldOfView) / 2.0);
   return normalize(vec3(i_xy, -i_z));
 }
@@ -233,16 +210,12 @@ mat4 viewMatrix(vec3 eye, vec3 center, vec3 up) {
   return mat4(vec4(i_s, 0.0), vec4(i_u, 0.0), vec4(-i_f, 0.0), vec4(0.0, 0.0, 0.0, 1));
 }
 
-vec3 postProcess(vec3 color) {
-  // vec3 overlay = texture(_SAMPLER, textureCoord).rgb;
-  // return color + overlay;
-  return color;
-}
-
 void main() {
   vec3 color = vec3(0.0);
 
-  vec3 viewDir = rayDirection(90.0, RESOLUTION.xy, gl_FragCoord.xy);
+  // TODO: Siirrä koko matriisin laskenta cpun puolelle
+  float fieldOfView = 90.0;
+  vec3 viewDir = rayDirection(fieldOfView, RESOLUTION.xy, gl_FragCoord.xy);
 
   mat4 viewToWorld = viewMatrix(CAMERA_POS, CAMERA_LOOKAT, CAMERA_UP);
   vec3 worldDir = (viewToWorld * vec4(viewDir, 0.0)).xyz;
@@ -251,11 +224,11 @@ void main() {
 
   if (hitInfo.dist > MAX_DIST - EPSILON) {
     // Didn't hit anything
-    color = vec3(.1, 0.1, 0.1);
+    color = vec3(0.0);
   } else {
     vec3 p = CAMERA_POS + hitInfo.dist * worldDir;
     color = calcMaterial(p, CAMERA_POS, hitInfo);
   }
 
-  FRAG_COLOR = vec4(postProcess(color), 1.0);
+  FRAG_COLOR = vec4(color, 1.0);
 }
