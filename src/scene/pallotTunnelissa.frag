@@ -38,7 +38,8 @@ struct result {
 // Pallot
 
 result sphere(vec3 samplePoint) {
-  return result(length(samplePoint) - 1.0, samplePoint, SPHERE);
+  float distort = 0.01 * sin(TIME) * sin(samplePoint.x * 25.0) * sin(samplePoint.y * 25.0) * sin(samplePoint.z * 25.0);
+  return result(length(samplePoint) - 1.0 + distort, samplePoint, SPHERE);
 }
 
 float smMin(float a, float b, float k) {
@@ -93,7 +94,7 @@ result render(vec3 p) {
 
   // return cube(p);
 
-  result balls = smoothUnion(sphere(p1), sphere(p2), 0.3);
+  result balls = smoothUnion(sphere(p1), sphere(p2), 0.5);
 
   return opUnion(balls, env);
 }
