@@ -27,6 +27,7 @@ uniform vec3 CAMERA_UP;
 const int OUT_OF_VIEW = -1;
 const int SPHERE = 0;
 const int TUNNEL = 1;
+const int BOX = 2;
 
 struct result {
   float dist;
@@ -75,12 +76,24 @@ result opUnion(result a, result b) {
   return b;
 }
 
+// Kuutio
+
+result cube(vec3 p) {
+  vec3 b = vec3(5.0);
+  vec3 i_q = abs(p) - b;
+  float dist = length(max(i_q, 0.0)) + min(max(i_q.x, max(i_q.y, i_q.z)), 0.0);
+  return result(-dist, p, BOX);
+}
+
 result render(vec3 p) {
   vec3 p1 = p - CAMERA_LOOKAT;
   vec3 p2 = p + CAMERA_LOOKAT + vec3(sin(TIME * 6.0));
 
-  result balls = smoothUnion(sphere(p1), sphere(p2), 0.3);
   result env = tunnel(p);
+
+  // return cube(p);
+
+  result balls = smoothUnion(sphere(p1), sphere(p2), 0.3);
 
   return opUnion(balls, env);
 }
@@ -225,14 +238,22 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
     float roughness = texture(ROUGHNESS_SAMPLER, uv).r;
     float ambientOcclusion = texture(AO_SAMPLER, uv).r;
 
-    return pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion, 0.0);
+    vec3 color = pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion, 0.0);
+    color.r = 0.0;
+    color.g *= 0.5;
+    return color;
+  }
+
+  if (r.kind == BOX) {
+    return texture(ENVIRONMENT_SAMPLER, r.p).rgb;
   }
 
   return vec3(1.0);
 }
 
 vec3 rayDirection(float fieldOfView, vec2 size, vec2 fragCoord) {
-  vec2 i_xy = fragCoord - size / 2.0;
+  size *= 0.5;
+  vec2 i_xy = fragCoord - size;
   float i_z = size.y / tan(radians(fieldOfView) / 2.0);
   return normalize(vec3(i_xy, -i_z));
 }
@@ -248,7 +269,7 @@ void main() {
   vec3 color = vec3(0.0);
 
   // TODO: Siirrä koko matriisin laskenta cpun puolelle
-  float fieldOfView = 90.0;// 120.0 + 30.0 * sin(TIME * 5.0);
+  float fieldOfView = 60.0 + 15.0 * sin(TIME * 5.0);
   vec3 viewDir = rayDirection(fieldOfView, RESOLUTION.xy, gl_FragCoord.xy);
 
   mat4 viewToWorld = viewMatrix(CAMERA_POS, CAMERA_LOOKAT, CAMERA_UP);

@@ -189,16 +189,18 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
     float roughness = texture(ROUGHNESS_SAMPLER, uv).r;
     float ambientOcclusion = texture(AO_SAMPLER, uv).r;
 
-    return pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion);
-
+    vec3 color = pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion);
+    color.r = 0.0;
+    color.g *= 0.5;
+    return color;
   }
 
   return vec3(1.0);
 }
 
 vec3 rayDirection(float fieldOfView, vec2 size, vec2 fragCoord) {
-  vec2 i_xy = fragCoord - size / 2.0;
-  i_xy.x *= 1.77778; // aspect ratio
+  size *= 0.5;
+  vec2 i_xy = fragCoord - size;
   float i_z = size.y / tan(radians(fieldOfView) / 2.0);
   return normalize(vec3(i_xy, -i_z));
 }

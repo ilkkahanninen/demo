@@ -96,9 +96,7 @@ waitFor(material).then(() => {
         CAMERA_LOOKAT: direction,
         CAMERA_UP: up,
       });
-      // setCameraPos(vec3(0.0, 0.0, 0.0));
-      // setCameraUp(up);
-      // setCameraLookAt(direction);
+      material.bindAt(gl.TEXTURE0);
       screen.render();
     });
 

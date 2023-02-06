@@ -1,4 +1,3 @@
-import { config } from "./config";
 import { render } from "./FrameContext";
 import { ShaderProgram } from "./ShaderProgram";
 import { vec3, Vec3 } from "./vectors";
@@ -34,21 +33,21 @@ export class CubeMapBuffer {
       {
         target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
         direction: vec3(0.0, -1.0, 0.0),
-        up: vec3(0.0, 0.0, -1.0),
+        up: vec3(0.0, 0.0, 1.0),
       },
       {
         target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
         direction: vec3(0.0, 1.0, 0.0),
-        up: vec3(0.0, 0.0, 1.0),
+        up: vec3(0.0, 0.0, -1.0),
       },
       {
         target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-        direction: vec3(0.0, 0.0, -1.0),
+        direction: vec3(0.0, 0.0, 1.0),
         up: vec3(0.0, 1.0, 0.0),
       },
       {
         target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
-        direction: vec3(0.0, 0.0, 1.0),
+        direction: vec3(0.0, 0.0, -1.0),
         up: vec3(0.0, 1.0, 0.0),
       },
     ];
@@ -98,10 +97,10 @@ export class CubeMapBuffer {
       this.size
     )(() => {
       const gl = this.gl;
+      gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
       gl.viewport(0, 0, this.size, this.size);
 
-      this.sides.forEach((side) => {
-        gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
+      this.sides.forEach((side, index) => {
         gl.framebufferTexture2D(
           gl.FRAMEBUFFER,
           gl.COLOR_ATTACHMENT0,
@@ -109,11 +108,17 @@ export class CubeMapBuffer {
           this.cubeMap,
           0
         );
+        // if (index > 1) {
+        //   const n = index + 1;
+        //   gl.clearColor(n & 1, (n >> 1) & 1, (n >> 2) & 1, 1.0);
+        //   gl.clear(gl.COLOR_BUFFER_BIT);
+        // } else {
         draw(side.direction, side.up);
+        // }
       });
 
       gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-      gl.viewport(0, 0, config.canvas.width, config.canvas.height);
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     });
   }
 
