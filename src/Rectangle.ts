@@ -8,7 +8,7 @@ export class Rectangle {
     this.vertexBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
 
-    const vertexPositions = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
+    const vertexPositions = [1.0, -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0];
     gl.bufferData(
       gl.ARRAY_BUFFER,
       new Float32Array(vertexPositions),

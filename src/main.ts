@@ -10,6 +10,9 @@ import { CubeMapBuffer } from "./CubemapBuffer";
 import { FrameBuffer } from "./FrameBuffer";
 import { renderCanvas } from "./FrameContext";
 import { NoiseBuffer } from "./NoiseBuffer";
+import bloomCopySrc from "./scene/bloomCopy.frag";
+import blurXSrc from "./scene/blurX.frag";
+import blurYSrc from "./scene/blurY.frag";
 import defaultVertexSrc from "./scene/default.vert";
 import pallotTunnelissaSrc from "./scene/pallotTunnelissa.frag";
 import pallotTunnelissaEnvSrc from "./scene/pallotTunnelissaEnv.frag";
@@ -77,8 +80,15 @@ waitFor(material).then(() => {
     "AO_SAMPLER"
   );
 
+  const bloomCopy = new ShaderProgram(gl, defaultVertexSrc, bloomCopySrc);
+  const blur1stPass = new ShaderProgram(gl, defaultVertexSrc, blurXSrc);
+  const blur2ndPass = new ShaderProgram(gl, defaultVertexSrc, blurYSrc);
+
+  const bloomBufferA = new FrameBuffer(gl, gl.canvas.width, gl.canvas.height);
+  const bloomBufferB = new FrameBuffer(gl, gl.canvas.width, gl.canvas.height);
+
   const postprocess = new ShaderProgram(gl, defaultVertexSrc, postprocessSrc);
-  postprocess.setupSamplers("FRAME", "NOISE");
+  postprocess.setupSamplers("FRAME", "NOISE", "BLOOM");
 
   const setTime = balls.float("TIME");
   const setCameraPos = balls.vec3("CAMERA_POS");
@@ -131,11 +141,28 @@ waitFor(material).then(() => {
       screen.render();
     });
 
-    // Testi: piirretään framebuffer ruudulle
+    // Kopio framesta bloom-bufferiin
+    bloomBufferA.renderToItself(bloomCopy, () => {
+      framebuffer.useAt(gl.TEXTURE0);
+      screen.render();
+    });
+
+    bloomBufferB.renderToItself(blur1stPass, () => {
+      bloomBufferA.useAt(gl.TEXTURE0);
+      screen.render();
+    });
+
+    bloomBufferA.renderToItself(blur2ndPass, () => {
+      bloomBufferB.useAt(gl.TEXTURE0);
+      screen.render();
+    });
+
+    // Framebuffer ruudulle
 
     renderCanvas(postprocess)(() => {
       framebuffer.useAt(gl.TEXTURE0);
       noise.useAt(gl.TEXTURE1);
+      bloomBufferA.useAt(gl.TEXTURE2);
       postprocess.set({ NOISE_POS: vec2(Math.random(), Math.random()) });
       screen.render();
     });
