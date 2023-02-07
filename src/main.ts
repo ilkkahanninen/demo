@@ -3,12 +3,13 @@ import { getMetal } from "./materials/metal/Metal";
 import { Rectangle } from "./Rectangle";
 import { waitFor } from "./Resource";
 import { ShaderProgram } from "./ShaderProgram";
-import { normalize, vec3 } from "./vectors";
+import { normalize, vec2, vec3 } from "./vectors";
 
 import { config } from "./config";
 import { CubeMapBuffer } from "./CubemapBuffer";
 import { FrameBuffer } from "./FrameBuffer";
 import { renderCanvas } from "./FrameContext";
+import { NoiseBuffer } from "./NoiseBuffer";
 import defaultVertexSrc from "./scene/default.vert";
 import pallotTunnelissaSrc from "./scene/pallotTunnelissa.frag";
 import pallotTunnelissaEnvSrc from "./scene/pallotTunnelissaEnv.frag";
@@ -20,12 +21,12 @@ document.body.style.display = "flex";
 document.body.style.alignItems = "center";
 document.body.style.height = "100vh";
 
-let canvas = document.querySelector<HTMLCanvasElement>("canvas")!;
+const canvas = document.querySelector<HTMLCanvasElement>("canvas")!;
 canvas.style.width = "100%";
 canvas.width = config.canvas.width;
 canvas.height = config.canvas.height;
 
-let gl = canvas.getContext("webgl2")!;
+const gl = canvas.getContext("webgl2")!;
 
 if (process.env.NODE_ENV !== "production") {
   if (!gl) {
@@ -43,11 +44,17 @@ const framebuffer = new FrameBuffer(
   config.canvas.width,
   config.canvas.height
 );
+const noise = new NoiseBuffer(gl, 1024);
 
 waitFor(material).then(() => {
   const screen = new Rectangle(gl);
 
   const balls = new ShaderProgram(gl, defaultVertexSrc, pallotTunnelissaSrc);
+
+  const [vertexPos, overlayTexturePos] = balls.vertexAttributes(
+    "VERTEX_POS",
+    "OVERLAY_TEXTURE_POS"
+  );
 
   balls.setupSamplers(
     "ALBEDO_SAMPLER",
@@ -71,11 +78,7 @@ waitFor(material).then(() => {
   );
 
   const postprocess = new ShaderProgram(gl, defaultVertexSrc, postprocessSrc);
-
-  const [vertexPos, overlayTexturePos] = balls.vertexAttributes(
-    "VERTEX_POS",
-    "OVERLAY_TEXTURE_POS"
-  );
+  postprocess.setupSamplers("FRAME", "NOISE");
 
   const setTime = balls.float("TIME");
   const setCameraPos = balls.vec3("CAMERA_POS");
@@ -132,6 +135,8 @@ waitFor(material).then(() => {
 
     renderCanvas(postprocess)(() => {
       framebuffer.useAt(gl.TEXTURE0);
+      noise.useAt(gl.TEXTURE1);
+      postprocess.set({ NOISE_POS: vec2(Math.random(), Math.random()) });
       screen.render();
     });
 

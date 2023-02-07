@@ -190,7 +190,7 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
     float ambientOcclusion = texture(AO_SAMPLER, uv).r;
 
     vec3 color = pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion);
-    color.r = 0.0;
+    color.r *= 0.25;
     color.g *= 0.5;
     return color;
   }

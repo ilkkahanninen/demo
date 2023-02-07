@@ -1,4 +1,4 @@
-import { Vec3 } from "./vectors";
+import { Vec2, Vec3 } from "./vectors";
 import { loadShader } from "./webgl";
 
 export class ShaderProgram {
@@ -44,7 +44,12 @@ export class ShaderProgram {
       if (typeof value === "number") {
         this.float(name)(value);
       } else if (Array.isArray(value)) {
-        this.vec3(name)(value as Vec3);
+        if (value.length === 2) {
+          this.vec2(name)(value as Vec2);
+        }
+        if (value.length === 3) {
+          this.vec3(name)(value as Vec3);
+        }
       }
     });
   }
@@ -53,6 +58,13 @@ export class ShaderProgram {
     const location = this.uniform(name);
     return (value: number) => {
       return this.gl.uniform1f(location, value);
+    };
+  }
+
+  vec2(name: string) {
+    const location = this.uniform(name);
+    return (v: Vec2) => {
+      return this.gl.uniform2f(location, ...v);
     };
   }
 
