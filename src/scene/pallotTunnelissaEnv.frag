@@ -126,7 +126,7 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
 
   for (int i = 0; i < 4; i++) {
     vec3 lightPos = 1.2 * vec3(sin(TIME * 2.0 + float(i) * 4.2) * 2.0, cos(TIME * 2.0) * 2.0 + float(i) * 3.1, sin(TIME * 2.0 + float(i) * 3.0) * 2.0);
-    vec3 lightColor = vec3(20.0, 19.0, 18.0);
+    vec3 lightColor = i == 0 ? vec3(30.0, 0.0, 0.0) : vec3(20.0, 19.0, 18.0);
 
     vec3 L = normalize(lightPos - p);
     vec3 H = normalize(V + L);
