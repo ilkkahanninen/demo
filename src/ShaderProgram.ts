@@ -90,9 +90,9 @@ export class ShaderProgram {
 
   uniform(name: string): WebGLUniformLocation | null {
     const location = this.gl.getUniformLocation(this.program, name);
-    if (location === null) {
-      console.warn(`Uniform ${name} does not exist`);
-    }
+    // if (location === null) {
+    //   console.warn(`Uniform ${name} does not exist`);
+    // }
     return location;
   }
 

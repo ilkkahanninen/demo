@@ -86,8 +86,16 @@ waitFor(material).then(() => {
   const blur1stPass = new ShaderProgram(gl, defaultVertexSrc, blurXSrc);
   const blur2ndPass = new ShaderProgram(gl, defaultVertexSrc, blurYSrc);
 
-  const bloomBufferA = new FrameBuffer(gl, gl.canvas.width, gl.canvas.height);
-  const bloomBufferB = new FrameBuffer(gl, gl.canvas.width, gl.canvas.height);
+  const bloomBufferA = new FrameBuffer(
+    gl,
+    gl.canvas.width / 2.0,
+    gl.canvas.height / 2.0
+  );
+  const bloomBufferB = new FrameBuffer(
+    gl,
+    gl.canvas.width / 2.0,
+    gl.canvas.height / 2.0
+  );
 
   const postprocess = new ShaderProgram(gl, defaultVertexSrc, postprocessSrc);
   postprocess.setupSamplers("FRAME", "NOISE", "BLOOM");

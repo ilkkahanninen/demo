@@ -9,15 +9,20 @@ export class FrameBuffer {
   width: number;
   height: number;
 
-  constructor(gl: WebGL2RenderingContext, width: number, height: number) {
+  constructor(
+    gl: WebGL2RenderingContext,
+    width: number,
+    height: number,
+    hdr: boolean = true
+  ) {
     const targetTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, targetTexture);
 
     const level = 0;
-    const internalFormat = gl.RGBA;
+    const internalFormat = hdr ? gl.RGBA16F : gl.RGBA;
     const border = 0;
     const format = gl.RGBA;
-    const type = gl.UNSIGNED_BYTE;
+    const type = hdr ? gl.FLOAT : gl.UNSIGNED_BYTE;
 
     gl.texImage2D(
       gl.TEXTURE_2D,

@@ -11,8 +11,8 @@ in vec2 RESOLUTION;
 out vec4 FRAG_COLOR;
 
 // Copied from https://www.shadertoy.com/view/3ltfzl
-const float rad = 14.;
-const float LOD = 6.;
+const float rad = 42.;
+const float LOD = 2.;
 const float dev = 7.;
 const float m = 0.398942280401 / dev;
 
