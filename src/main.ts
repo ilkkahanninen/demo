@@ -15,7 +15,6 @@ import blurXSrc from "./scene/blurX.frag";
 import blurYSrc from "./scene/blurY.frag";
 import defaultVertexSrc from "./scene/default.vert";
 import pallotTunnelissaSrc from "./scene/pallotTunnelissa.frag";
-import pallotTunnelissaEnvSrc from "./scene/pallotTunnelissaEnv.frag";
 import postprocessSrc from "./scene/postprocess.frag";
 
 document.body.style.background = "#000";
@@ -70,7 +69,10 @@ waitFor(material).then(() => {
   const ballsEnv = new ShaderProgram(
     gl,
     defaultVertexSrc,
-    pallotTunnelissaEnvSrc
+    pallotTunnelissaSrc,
+    {
+      RENDER_ENVIRONMENT_MAP: true,
+    }
   );
 
   ballsEnv.setupSamplers(

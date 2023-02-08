@@ -3,6 +3,8 @@
 precision highp float;
 //]
 
+#env RENDER_ENVIRONMENT_MAP
+
 const int MAX_MARCHING_STEPS = 256;
 const float MIN_DIST = 0.0;
 const float MAX_DIST = 50.0;
@@ -17,7 +19,11 @@ uniform sampler2D ALBEDO_SAMPLER;
 uniform sampler2D METALLIC_SAMPLER;
 uniform sampler2D ROUGHNESS_SAMPLER;
 uniform sampler2D AO_SAMPLER;
+
+#ifndef RENDER_ENVIRONMENT_MAP
 uniform samplerCube ENVIRONMENT_SAMPLER;
+#endif
+
 uniform float TIME;
 
 uniform vec3 CAMERA_POS;
@@ -86,13 +92,17 @@ result cube(vec3 p) {
   return result(-dist, p, BOX);
 }
 
-result render(vec3 p) {
-  vec3 p1 = p - CAMERA_LOOKAT;
-  vec3 p2 = p + CAMERA_LOOKAT + vec3(sin(TIME * 6.0));
+// Skene yhdistettynä
 
+result render(vec3 p) {
   result env = tunnel(p);
 
-  // return cube(p);
+  #ifdef RENDER_ENVIRONMENT_MAP
+  return env;
+  #endif
+
+  vec3 p1 = p - CAMERA_LOOKAT;
+  vec3 p2 = p + CAMERA_LOOKAT + vec3(sin(TIME * 6.0));
 
   result balls = smoothUnion(sphere(p1), sphere(p2), 0.5);
 
@@ -202,15 +212,17 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
 
   vec3 ambient = vec3(0.03) * albedo * ambientOcclusion;
 
+  #ifndef RENDER_ENVIRONMENT_MAP
   vec3 reflection = vec3(0.0);
   if (metallic > 0.0 && reflectCoef > 0.0) {
     vec3 R = reflect(V, N);
     reflection = texture(ENVIRONMENT_SAMPLER, R).rgb * metallic * reflectCoef;
   }
 
-  vec3 color = ambient + lightColorSum + reflection;
-
-  return color;
+  return ambient + lightColorSum + reflection;
+  #else
+  return ambient + lightColorSum;
+  #endif
 }
 
 vec2 sphereUvMap(vec3 d) {
@@ -220,6 +232,7 @@ vec2 sphereUvMap(vec3 d) {
 }
 
 vec3 calcMaterial(vec3 p, vec3 eye, result r) {
+  #ifndef RENDER_ENVIRONMENT_MAP
   if (r.kind == SPHERE) {
     vec2 uv = sphereUvMap(normalize(r.p));
 
@@ -230,6 +243,7 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
 
     return pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion, 0.5);
   }
+  #endif
 
   if (r.kind == TUNNEL) {
     vec2 uv = tunnelUvMap(r.p);
@@ -245,9 +259,11 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
     return color;
   }
 
+  #ifndef RENDER_ENVIRONMENT_MAP
   if (r.kind == BOX) {
     return texture(ENVIRONMENT_SAMPLER, r.p).rgb;
   }
+  #endif
 
   return vec3(1.0);
 }
@@ -270,11 +286,15 @@ void main() {
   vec3 color = vec3(0.0);
 
   // TODO: Siirrä koko matriisin laskenta cpun puolelle
+  #ifdef RENDER_ENVIRONMENT_MAP
+  float fieldOfView = 90.0;
+  #else
   float fieldOfView = 60.0 + 15.0 * sin(TIME * 5.0);
+  #endif
+
   vec3 viewDir = rayDirection(fieldOfView, RESOLUTION.xy, gl_FragCoord.xy);
 
   mat4 viewToWorld = viewMatrix(CAMERA_POS, CAMERA_LOOKAT, CAMERA_UP);
-  // mat4 viewToWorld = viewMatrix(vec3(0.0), vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
 
   vec3 worldDir = (viewToWorld * vec4(viewDir, 0.0)).xyz;
 

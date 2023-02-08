@@ -1,5 +1,5 @@
 import { Vec2, Vec3 } from "./vectors";
-import { loadShader } from "./webgl";
+import { Defines, loadShader } from "./webgl";
 
 export class ShaderProgram {
   gl: WebGL2RenderingContext;
@@ -9,12 +9,13 @@ export class ShaderProgram {
   constructor(
     gl: WebGL2RenderingContext,
     vertexShader: string,
-    fragmentShader: string
+    fragmentShader: string,
+    defines?: Defines
   ) {
     this.gl = gl;
 
-    const vs = loadShader(gl, gl.VERTEX_SHADER, vertexShader);
-    const fs = loadShader(gl, gl.FRAGMENT_SHADER, fragmentShader);
+    const vs = loadShader(gl, gl.VERTEX_SHADER, vertexShader, defines);
+    const fs = loadShader(gl, gl.FRAGMENT_SHADER, fragmentShader, defines);
 
     this.program = gl.createProgram()!;
     gl.attachShader(this.program, vs);
