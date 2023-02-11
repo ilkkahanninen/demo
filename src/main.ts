@@ -127,12 +127,11 @@ waitFor(material).then(() => {
       setTime(time);
 
       setCameraPos(
-        vec3(0.0, 15.0, 0.0)
-        // vec3(
-        //   1.6 * 2.3 * Math.cos(time * 8.0),
-        //   3.6 * Math.cos(time * 6.0),
-        //   1.6 * 1.3 * Math.sin(time * 8.0)
-        // )
+        vec3(
+          1.6 * 2.3 * Math.cos(time * 8.0),
+          3.6 * Math.cos(time * 6.0),
+          1.6 * 1.3 * Math.sin(time * 8.0)
+        )
       );
       setCameraUp(
         normalize(

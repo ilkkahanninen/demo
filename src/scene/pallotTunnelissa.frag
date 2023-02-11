@@ -13,6 +13,7 @@ const float STEP_CORRECTION = 1.0; // lower -> better quality, but slower
 const float PI = 3.14159265359;
 
 in vec2 RESOLUTION;
+in mat4 VIEW_MATRIX;
 out vec4 FRAG_COLOR;
 
 uniform sampler2D ALBEDO_SAMPLER;
@@ -340,13 +341,6 @@ vec3 rayDirection(float fieldOfView, vec2 size, vec2 fragCoord) {
   return normalize(vec3(i_xy, -i_z));
 }
 
-mat4 viewMatrix(vec3 eye, vec3 center, vec3 up) {
-  vec3 i_f = normalize(center - eye);
-  vec3 i_s = normalize(cross(i_f, up));
-  vec3 i_u = cross(i_s, i_f);
-  return mat4(vec4(i_s, 0.0), vec4(i_u, 0.0), vec4(-i_f, 0.0), vec4(0.0, 0.0, 0.0, 1));
-}
-
 void main() {
   vec3 color = vec3(0.0);
 
@@ -357,21 +351,17 @@ void main() {
   float fieldOfView = 60.0 + 15.0 * sin(TIME * 5.0);
   #endif
 
-  vec3 cameraPos = CAMERA_POS;
   vec3 viewDir = rayDirection(fieldOfView, RESOLUTION.xy, gl_FragCoord.xy);
+  vec3 worldDir = (VIEW_MATRIX * vec4(viewDir, 0.0)).xyz;
 
-  mat4 viewToWorld = viewMatrix(cameraPos, CAMERA_LOOKAT, CAMERA_UP);
-
-  vec3 worldDir = (viewToWorld * vec4(viewDir, 0.0)).xyz;
-
-  result hitInfo = shortestDistanceToSurface(cameraPos, worldDir);
+  result hitInfo = shortestDistanceToSurface(CAMERA_POS, worldDir);
 
   if (hitInfo.dist > MAX_DIST - EPSILON) {
     // Didn't hit anything
-    color = vec3(0.0, 0.0, 0.0);
+    // color = vec3(0.0, 0.0, 0.0);
   } else {
-    vec3 p = cameraPos + hitInfo.dist * worldDir;
-    color = calcMaterial(p, cameraPos, hitInfo);
+    vec3 p = CAMERA_POS + hitInfo.dist * worldDir;
+    color = calcMaterial(p, CAMERA_POS, hitInfo);
   }
 
   FRAG_COLOR = vec4(color, 1.0);
