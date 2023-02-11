@@ -52,7 +52,7 @@ result opUnion(result a, result b) {
 
 // Valojen sijainnit ja värit - TODO: nämäkin voisi siirtää täältä pois ja laskea vain kerran
 
-const int NUMBER_OF_LIGHTS = 4;
+const int NUMBER_OF_LIGHTS = 3;
 
 vec3 lightPosition(int index) {
   float x = sin(TIME * 20.0 + float(index) * 1.1);
