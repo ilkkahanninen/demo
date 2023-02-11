@@ -122,6 +122,13 @@ result cube(vec3 p) {
 
 // Skene yhdistettynä
 
+vec3 ballPos(int index) {
+  if (index == 0) {
+    return CAMERA_LOOKAT;
+  }
+  return CAMERA_LOOKAT + vec3(sin(TIME * 6.0));
+}
+
 result render(vec3 p) {
   result env = opUnion(tunnel(p), lightOrbs(p));
 
@@ -129,8 +136,8 @@ result render(vec3 p) {
   return env;
   #endif
 
-  vec3 p1 = p - CAMERA_LOOKAT;
-  vec3 p2 = p + CAMERA_LOOKAT + vec3(sin(TIME * 6.0));
+  vec3 p1 = p - ballPos(0);
+  vec3 p2 = p + ballPos(1);
 
   result balls = smoothUnion(sphere(p1), sphere(p2), 2.5);
 
@@ -199,7 +206,24 @@ float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
   return ggx1 * ggx2;
 }
 
-vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughness, float ambientOcclusion, float reflectCoef) {
+const int NO_SHADOWS = 0;
+const int BALL_SHADOWS = 1;
+const float SHADOW_SMOOTHING = 0.33; // pienempi -> pehmeämpi varjon reuna
+
+float vectorIntersectsSphere(vec3 worldPos, vec3 spherePos, float radius, vec3 dir) {
+  float a = dot(dir, dir);
+  vec3 rayToSphere = worldPos - spherePos;
+  float b = 2.0 * dot(dir, rayToSphere);
+  float c = dot(rayToSphere, rayToSphere) - (radius * radius);
+  return clamp(SHADOW_SMOOTHING * (4.0 * a * c - b * b), 0.0, 1.0);
+}
+
+float getShadowCoef(vec3 pos, vec3 lightPos) {
+  vec3 dir = normalize(lightPos - pos);
+  return min(vectorIntersectsSphere(pos, ballPos(0), 1.0, dir), vectorIntersectsSphere(pos, ballPos(1), 1.0, dir));
+}
+
+vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughness, float ambientOcclusion, float reflectCoef, int shadows) {
   vec3 N = estimateNormal(p);
   vec3 V = normalize(eye - p);
 
@@ -209,6 +233,15 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
   vec3 lightColorSum = vec3(0.0);
   for (int i = 0; i < NUMBER_OF_LIGHTS; i++) {
     vec3 lightPos = lightPosition(i);
+
+    float shadowCoef = 1.0;
+    if (shadows == BALL_SHADOWS) {
+      shadowCoef = getShadowCoef(p, lightPos);
+      if (shadowCoef < EPSILON) {
+        continue;
+      }
+    }
+
     vec3 lightCol = lightColor(i);
 
     vec3 L = normalize(lightPos - p);
@@ -235,7 +268,7 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
     kDiffuse *= 1.0 - metallic;
 
     float NdotL = max(dot(N, L), 0.0); // y oli 0.0, mutta sillä ilmestyi niitä mustia läikkiä
-    lightColorSum += (kDiffuse * albedo / PI + specular) * radiance * NdotL;
+    lightColorSum += (kDiffuse * albedo / PI + specular) * radiance * NdotL * shadowCoef;
   }
 
   vec3 ambient = vec3(0.03) * albedo * ambientOcclusion;
@@ -269,7 +302,7 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
     float roughness = texture(ROUGHNESS_SAMPLER, uv).r;
     float ambientOcclusion = texture(AO_SAMPLER, uv).r;
 
-    return pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion, 0.5);
+    return pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion, 0.5, NO_SHADOWS);
   }
   #endif
 
@@ -281,7 +314,7 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
     float roughness = texture(ROUGHNESS_SAMPLER, uv).r;
     float ambientOcclusion = texture(AO_SAMPLER, uv).r;
 
-    vec3 color = pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion, 0.0);
+    vec3 color = pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion, 0.0, BALL_SHADOWS);
     color.r *= 0.25;
     color.g *= 0.5;
     return color;

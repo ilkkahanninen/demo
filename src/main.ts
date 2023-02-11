@@ -6,7 +6,7 @@ import { ShaderProgram } from "./ShaderProgram";
 import { normalize, vec2, vec3 } from "./vectors";
 
 import { config } from "./config";
-import { CubeMapBuffer } from "./CubemapBuffer";
+import { CubeMapBuffer } from "./CubeMapBuffer";
 import { FrameBuffer } from "./FrameBuffer";
 import { renderCanvas } from "./FrameContext";
 import { NoiseBuffer } from "./NoiseBuffer";
@@ -123,11 +123,12 @@ waitFor(material).then(() => {
       setTime(time);
 
       setCameraPos(
-        vec3(
-          1.6 * 2.3 * Math.cos(time * 8.0),
-          3.6 * Math.cos(time * 6.0),
-          1.6 * 1.3 * Math.sin(time * 8.0)
-        )
+        vec3(0.0, 15.0, 0.0)
+        // vec3(
+        //   1.6 * 2.3 * Math.cos(time * 8.0),
+        //   3.6 * Math.cos(time * 6.0),
+        //   1.6 * 1.3 * Math.sin(time * 8.0)
+        // )
       );
       setCameraUp(
         normalize(
