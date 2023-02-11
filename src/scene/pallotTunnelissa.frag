@@ -79,7 +79,7 @@ result lightOrbs(vec3 p) {
 // Pallot
 
 result sphere(vec3 samplePoint) {
-  float distort = 0.01 * sin(TIME) * sin(samplePoint.x * 25.0) * sin(samplePoint.y * 25.0) * sin(samplePoint.z * 25.0);
+  float distort = 0.005 * sin(TIME) * sin(samplePoint.x * 15.0) * sin(samplePoint.y * 15.0) * sin(samplePoint.z * 15.0);
   return result(length(samplePoint) - 1.0 + distort, samplePoint, SPHERE);
 }
 

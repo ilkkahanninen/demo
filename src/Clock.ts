@@ -2,6 +2,7 @@ export class Clock {
   bpm: number;
   startTime = 0;
   pauseTime: number | null = null;
+  pendingRender: (() => void) | null = null;
 
   constructor(beatsPerMinute: number) {
     this.bpm = beatsPerMinute;
@@ -34,6 +35,7 @@ export class Clock {
     if (this.pauseTime) {
       this.startTime += new Date().getTime() - this.pauseTime;
       this.pauseTime = null;
+      this.pendingRender && this.requestNextFrame(this.pendingRender);
     }
   }
 
@@ -51,5 +53,13 @@ export class Clock {
 
   beats(): number {
     return (this.seconds() * 60.0) / this.bpm;
+  }
+
+  async requestNextFrame(render: () => void) {
+    if (this.pauseTime) {
+      this.pendingRender = render;
+    } else {
+      requestAnimationFrame(render);
+    }
   }
 }

@@ -86,16 +86,8 @@ waitFor(material).then(() => {
   const blur1stPass = new ShaderProgram(gl, defaultVertexSrc, blurXSrc);
   const blur2ndPass = new ShaderProgram(gl, defaultVertexSrc, blurYSrc);
 
-  const bloomBufferA = new FrameBuffer(
-    gl,
-    gl.canvas.width / 2.0,
-    gl.canvas.height / 2.0
-  );
-  const bloomBufferB = new FrameBuffer(
-    gl,
-    gl.canvas.width / 2.0,
-    gl.canvas.height / 2.0
-  );
+  const bloomBufferA = new FrameBuffer(gl, gl.canvas.width, gl.canvas.height);
+  const bloomBufferB = new FrameBuffer(gl, gl.canvas.width, gl.canvas.height);
 
   const postprocess = new ShaderProgram(gl, defaultVertexSrc, postprocessSrc);
   postprocess.setupSamplers("FRAME", "NOISE", "BLOOM");
@@ -133,7 +125,7 @@ waitFor(material).then(() => {
       setCameraPos(
         vec3(
           1.6 * 2.3 * Math.cos(time * 8.0),
-          1.6 * Math.cos(time * 6.0),
+          3.6 * Math.cos(time * 6.0),
           1.6 * 1.3 * Math.sin(time * 8.0)
         )
       );
@@ -177,7 +169,7 @@ waitFor(material).then(() => {
       screen.render();
     });
 
-    requestAnimationFrame(renderNext);
+    clock.requestNextFrame(renderNext);
   };
 
   window.onclick = () => {
