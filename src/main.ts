@@ -29,6 +29,10 @@ canvas.width = config.canvas.width;
 canvas.height = config.canvas.height;
 
 const gl = canvas.getContext("webgl2")!;
+const colorBufferFloatExt = gl.getExtension("EXT_color_buffer_float");
+if (!colorBufferFloatExt) {
+  throw new Error("EXT_color_buffer_float is not supported");
+}
 
 if (process.env.NODE_ENV !== "production") {
   if (!gl) {
