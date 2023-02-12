@@ -52,7 +52,7 @@ result opUnion(result a, result b) {
 
 // Valojen sijainnit ja värit - TODO: nämäkin voisi siirtää täältä pois ja laskea vain kerran
 
-const int NUMBER_OF_LIGHTS = 3;
+const int NUMBER_OF_LIGHTS = 4;
 
 vec3 lightPosition(int index) {
   float x = sin(TIME * 20.0 + float(index) * 1.1);
@@ -235,6 +235,8 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
   for (int i = 0; i < NUMBER_OF_LIGHTS; i++) {
     vec3 lightPos = lightPosition(i);
 
+    float distance = length(lightPos - p);
+
     float shadowCoef = 1.0;
     if (shadows == BALL_SHADOWS) {
       shadowCoef = getShadowCoef(p, lightPos);
@@ -248,7 +250,6 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
     vec3 L = normalize(lightPos - p);
     vec3 H = normalize(V + L);
 
-    float distance = length(lightPos - p);
     float attenuation = 1.0 / (distance * distance);
     vec3 radiance = lightCol * attenuation;
 
@@ -268,7 +269,7 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
     vec3 kDiffuse = vec3(1.0) - kSpecular;
     kDiffuse *= 1.0 - metallic;
 
-    float NdotL = max(dot(N, L), 0.0); // y oli 0.0, mutta sillä ilmestyi niitä mustia läikkiä
+    float NdotL = max(dot(N, L), 0.0);
     lightColorSum += (kDiffuse * albedo / PI + specular) * radiance * NdotL * shadowCoef;
   }
 
@@ -316,9 +317,7 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
     float ambientOcclusion = texture(AO_SAMPLER, uv).r;
 
     vec3 color = pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion, 0.0, BALL_SHADOWS);
-    color.r *= 0.25;
-    color.g *= 0.5;
-    return color;
+    return color * vec3(0.25, 0.5, 1.0);
   }
 
   if (r.kind == LIGHT) {
@@ -344,11 +343,10 @@ vec3 rayDirection(float fieldOfView, vec2 size, vec2 fragCoord) {
 void main() {
   vec3 color = vec3(0.0);
 
-  // TODO: Siirrä koko matriisin laskenta cpun puolelle
   #ifdef RENDER_ENVIRONMENT_MAP
   float fieldOfView = 90.0;
   #else
-  float fieldOfView = 60.0 + 15.0 * sin(TIME * 5.0);
+  float fieldOfView = 110.0 + 40.0 * sin(TIME * 5.0);
   #endif
 
   vec3 viewDir = rayDirection(fieldOfView, RESOLUTION.xy, gl_FragCoord.xy);
