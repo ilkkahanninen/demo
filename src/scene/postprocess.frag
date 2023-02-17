@@ -6,7 +6,9 @@ precision highp float;
 uniform sampler2D FRAME;
 uniform sampler2D NOISE;
 uniform sampler2D BLOOM;
+uniform sampler2D LAYER;
 uniform vec2 NOISE_POS;
+uniform float TIME;
 const float NOISE_STRENGTH = 0.08;
 
 in vec2 OVERLAY_TEXTURE_COORD;
@@ -25,9 +27,18 @@ const vec3 YUV2RGB_B = vec3(1.0, 1.7790, 0.0);
 
 void main() {
     vec3 hdrColor = texture(FRAME, OVERLAY_TEXTURE_COORD).rgb;
-    vec3 color = pow(hdrColor / (hdrColor + vec3(1.0)), vec3(1.0 / GAMMA));
-
     vec4 noise = texture(NOISE, OVERLAY_TEXTURE_COORD + NOISE_POS);
+
+    float a = 0.5 + sin(round(TIME * 71.0));
+    float b = 0.5 + sin(round(TIME * 33.0));
+    float layerY1 = min(a, b);
+    float layerY2 = max(a, b);
+    vec3 layerColor = OVERLAY_TEXTURE_COORD.y > layerY1 && OVERLAY_TEXTURE_COORD.y < layerY2 ? vec3(0.8, 1.0, 0.0) : vec3(noise.r, noise.g * 0.005 - 0.0025, 0.0);
+
+    vec3 layer = layerColor * texture(LAYER, OVERLAY_TEXTURE_COORD + vec2(layerColor.g, 0.0)).rgb;
+
+    vec3 color = pow(hdrColor / (hdrColor + vec3(1.0)), vec3(1.0 / GAMMA)) + layer;
+
     vec3 bloom = texture(BLOOM, OVERLAY_TEXTURE_COORD).rgb;
 
     color.r = mix(color.r, sqrt(color.r), 0.4);

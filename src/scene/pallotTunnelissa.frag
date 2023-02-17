@@ -36,6 +36,7 @@ const int SPHERE = 0;
 const int TUNNEL = 1;
 const int BOX = 2;
 const int LIGHT = 3;
+const int STAIRCASE = 4;
 
 struct result {
   float dist;
@@ -62,7 +63,7 @@ vec3 lightPosition(int index) {
 }
 
 vec3 lightColor(int index) {
-  return index == 0 ? vec3(30.0, 1.5, 0.5) : vec3(20.0, 19.0, 18.0);
+  return index == 0 ? vec3(300.0, 1.5, 0.5) : vec3(20.0, 19.0, 18.0);
 }
 
 result lightOrb(vec3 p, int index) {
@@ -112,6 +113,54 @@ result tunnel(vec3 p) {
   return result(t, p, TUNNEL);
 }
 
+// Portaikko
+
+result glitch(vec3 p) {
+  // vec2 dir = normalize(p.xz);
+  // float angle = atan(dir.x, dir.y);
+  float h = mod(p.y, 10.0) > 5.0 ? 5.0 : 99.0;
+  float d = -length(p.xz) + h;
+
+  return result(d, p, TUNNEL);
+}
+
+result glitch2(vec3 p) {
+  const float k = 10.0; // or some other amount
+  float c = cos(k * p.y);
+  float s = sin(k * p.y);
+  mat2 m = mat2(c, -s, s, c);
+  vec3 q = vec3(m * p.xz, p.y);
+
+  vec2 dir = normalize(q.xz);
+  float angle = atan(dir.x, dir.y);
+  float h = angle >= 0.0 ? 4.0 : 6.0;
+  float d = -length(q.xz) + h;
+
+  return result(d, q, TUNNEL);
+}
+
+vec2 staircaseUvMap(vec3 p) {
+  vec3 d = normalize(p);
+  float u = 0.5 + atan(d.z, d.x) / (2.0 * PI);
+  float dst = length(p.xz) * 0.05;
+  return vec2(u + dst, p.y * 0.05);
+}
+
+result staircase(vec3 p) {
+  float k = TIME * 0.1;
+  float c = cos(k * p.y);
+  float s = sin(k * p.y);
+  mat2 m = mat2(c, s, -s, c);
+  vec3 q = vec3(m * p.xz, p.y);
+
+  float d1 = length(q.xz) - 2.5;
+  float d2c = length(q.xz) - 8.0;
+  float d2b = q.x;
+  float d = min(d1, max(d2c, d2b));
+
+  return result(-d, q, STAIRCASE);
+}
+
 // Kuutio
 
 result cube(vec3 p) {
@@ -131,7 +180,8 @@ vec3 ballPos(int index) {
 }
 
 result render(vec3 p) {
-  result env = opUnion(tunnel(p), lightOrbs(p));
+  // result env = opUnion(tunnel(p), lightOrbs(p));
+  result env = opUnion(staircase(p), lightOrbs(p));
 
   #ifdef RENDER_ENVIRONMENT_MAP
   return env;
@@ -320,6 +370,18 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
     return color * vec3(0.25, 0.5, 1.0);
   }
 
+  if (r.kind == STAIRCASE) {
+    vec2 uv = staircaseUvMap(r.p);
+
+    vec3 albedo = texture(ALBEDO_SAMPLER, uv).rgb;
+    float metallic = texture(METALLIC_SAMPLER, uv).r;
+    float roughness = texture(ROUGHNESS_SAMPLER, uv).r;
+    float ambientOcclusion = texture(AO_SAMPLER, uv).r;
+
+    vec3 color = pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion, 0.0, BALL_SHADOWS);
+    return color * vec3(0.25, 0.5, 1.0);
+  }
+
   if (r.kind == LIGHT) {
     return lightColor(int(r.p.r)) + vec3(1.0);
   }
@@ -356,7 +418,7 @@ void main() {
 
   if (hitInfo.dist > MAX_DIST - EPSILON) {
     // Didn't hit anything
-    // color = vec3(0.0, 0.0, 0.0);
+    color = vec3(0.2, 0.0, 0.0);
   } else {
     vec3 p = CAMERA_POS + hitInfo.dist * worldDir;
     color = calcMaterial(p, CAMERA_POS, hitInfo);

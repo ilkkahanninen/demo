@@ -16,6 +16,7 @@ import blurYSrc from "./scene/blurY.frag";
 import defaultVertexSrc from "./scene/default.vert";
 import pallotTunnelissaSrc from "./scene/pallotTunnelissa.frag";
 import postprocessSrc from "./scene/postprocess.frag";
+import { Texture } from "./Texture";
 
 document.body.style.background = "#000";
 document.body.style.margin = "0";
@@ -29,6 +30,7 @@ canvas.width = config.canvas.width;
 canvas.height = config.canvas.height;
 
 const gl = canvas.getContext("webgl2")!;
+gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 const colorBufferFloatExt = gl.getExtension("EXT_color_buffer_float");
 if (!colorBufferFloatExt) {
   throw new Error("EXT_color_buffer_float is not supported");
@@ -51,6 +53,11 @@ const framebuffer = new FrameBuffer(
   config.canvas.height
 );
 const noise = new NoiseBuffer(gl, 1024);
+
+const mattCurrent = new Texture(
+  gl,
+  new URL("layers/mattcurrent.png", import.meta.url)
+);
 
 waitFor(material).then(() => {
   const screen = new Rectangle(gl);
@@ -94,7 +101,7 @@ waitFor(material).then(() => {
   const bloomBufferB = new FrameBuffer(gl, gl.canvas.width, gl.canvas.height);
 
   const postprocess = new ShaderProgram(gl, defaultVertexSrc, postprocessSrc);
-  postprocess.setupSamplers("FRAME", "NOISE", "BLOOM");
+  postprocess.setupSamplers("FRAME", "NOISE", "BLOOM", "LAYER");
 
   const setTime = balls.float("TIME");
   const setCameraPos = balls.vec3("CAMERA_POS");
@@ -126,13 +133,14 @@ waitFor(material).then(() => {
 
       setTime(time);
 
-      setCameraPos(
-        vec3(
-          1.6 * 2.3 * Math.cos(time * 8.0),
-          3.6 * Math.cos(time * 6.0),
-          1.6 * 1.3 * Math.sin(time * 8.0)
-        )
-      );
+      setCameraPos(vec3(0.0, 0.0, 10.0));
+      // setCameraPos(
+      //   vec3(
+      //     1.6 * 2.3 * Math.cos(time * 8.0),
+      //     3.6 * Math.cos(time * 6.0),
+      //     1.6 * 1.3 * Math.sin(time * 8.0)
+      //   )
+      // );
       setCameraUp(
         normalize(
           vec3(
@@ -169,7 +177,11 @@ waitFor(material).then(() => {
       framebuffer.useAt(gl.TEXTURE0);
       noise.useAt(gl.TEXTURE1);
       bloomBufferA.useAt(gl.TEXTURE2);
-      postprocess.set({ NOISE_POS: vec2(Math.random(), Math.random()) });
+      mattCurrent.useAt(gl.TEXTURE3);
+      postprocess.set({
+        NOISE_POS: vec2(Math.random(), Math.random()),
+        TIME: time,
+      });
       screen.render();
     });
 
