@@ -3,7 +3,7 @@ import { getMetal } from "./materials/metal/Metal";
 import { Rectangle } from "./Rectangle";
 import { waitFor } from "./Resource";
 import { ShaderProgram } from "./ShaderProgram";
-import { normalize, vec2, vec3 } from "./vectors";
+import { vec2, vec3 } from "./vectors";
 
 import { config } from "./config";
 import { CubeMapBuffer } from "./CubeMapBuffer";
@@ -16,7 +16,7 @@ import blurYSrc from "./scene/blurY.frag";
 import defaultVertexSrc from "./scene/default.vert";
 import pallotTunnelissaSrc from "./scene/pallotTunnelissa.frag";
 import postprocessSrc from "./scene/postprocess.frag";
-import { layerFx } from "./script";
+import { script } from "./script";
 import { Texture } from "./Texture";
 
 document.body.style.background = "#000";
@@ -55,12 +55,12 @@ const framebuffer = new FrameBuffer(
 );
 const noise = new NoiseBuffer(gl, 1024);
 
-const layerManifesto = new Texture(
-  gl,
-  new URL("layers/Intro.png", import.meta.url)
-);
+const layers = [
+  new URL("layers/Intro.png", import.meta.url),
+  new URL("layers/Matt Current.png", import.meta.url),
+].map((url) => new Texture(gl, url));
 
-waitFor(material).then(() => {
+waitFor(material, ...layers).then(() => {
   const screen = new Rectangle(gl);
 
   const balls = new ShaderProgram(gl, defaultVertexSrc, pallotTunnelissaSrc);
@@ -104,15 +104,12 @@ waitFor(material).then(() => {
   const postprocess = new ShaderProgram(gl, defaultVertexSrc, postprocessSrc);
   postprocess.setupSamplers("FRAME", "NOISE", "BLOOM", "LAYER");
 
-  const setTime = balls.float("TIME");
-  const setCameraPos = balls.vec3("CAMERA_POS");
-  const setCameraLookAt = balls.vec3("CAMERA_LOOKAT");
-  const setCameraUp = balls.vec3("CAMERA_UP");
-
-  const clock = new Clock(135);
+  const clock = new Clock(config.bpm);
 
   const renderNext = () => {
     const time = clock.seconds();
+    const state = script.get(time);
+
     screen.bind(vertexPos, overlayTexturePos);
 
     // Rendataan ympäristö kuutioon
@@ -127,31 +124,17 @@ waitFor(material).then(() => {
       screen.render();
     });
 
-    // Testi: piirretään framebufferiin
+    // Päärendaushomma
     framebuffer.renderToItself(balls, () => {
       material.bindAt(gl.TEXTURE0);
       environmentMap.bindAt(gl.TEXTURE4);
 
-      setTime(time);
-
-      setCameraPos(vec3(0.0, 0.0, 10.0));
-      // setCameraPos(
-      //   vec3(
-      //     1.6 * 2.3 * Math.cos(time * 8.0),
-      //     3.6 * Math.cos(time * 6.0),
-      //     1.6 * 1.3 * Math.sin(time * 8.0)
-      //   )
-      // );
-      setCameraUp(
-        normalize(
-          vec3(
-            Math.sin(time * 0.1),
-            Math.cos(time * 0.12),
-            Math.sin(time * 0.17)
-          )
-        )
-      );
-      setCameraLookAt(vec3(1.5 * Math.cos(time * 2.0), 0.0, 0.0));
+      balls.set({
+        TIME: time,
+        CAMERA_POS: state.camera.pos,
+        CAMERA_LOOKAT: state.camera.lookAt,
+        CAMERA_UP: state.camera.up,
+      });
 
       screen.render();
     });
@@ -178,11 +161,14 @@ waitFor(material).then(() => {
       framebuffer.useAt(gl.TEXTURE0);
       noise.useAt(gl.TEXTURE1);
       bloomBufferA.useAt(gl.TEXTURE2);
-      layerManifesto.useAt(gl.TEXTURE3);
+
+      layers[state.overlay.texture]?.useAt(gl.TEXTURE3);
+
       postprocess.set({
         NOISE_POS: vec2(Math.random(), Math.random()),
         TIME: time,
-        LAYER_FX: layerFx.get(time),
+        LAYER_FX: state.overlay.fx,
+        LAYER_ALPHA: state.overlay.texture >= 0 ? 1 : 0,
       });
       screen.render();
     });

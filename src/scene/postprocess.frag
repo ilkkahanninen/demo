@@ -13,6 +13,7 @@ const vec2 RESOLUTION = vec2(1920, 720);
 uniform float TIME;
 const float NOISE_STRENGTH = 0.08;
 uniform float LAYER_FX;
+uniform float LAYER_ALPHA;
 
 in vec2 OVERLAY_TEXTURE_COORD;
 out vec4 FRAG_COLOR;
@@ -29,6 +30,10 @@ const vec3 YUV2RGB_G = vec3(1.0, -.3455, -.7169);
 const vec3 YUV2RGB_B = vec3(1.0, 1.7790, 0.0);
 
 vec3 textLayer(vec4 noise) {
+    if (LAYER_ALPHA <= 0.0) {
+        return vec3(0.0);
+    }
+
     float pixelSize = 40.0 * clamp((0.5 + sin(TIME * 1230.0)) - ((2.5 - 2.5 * LAYER_FX)) + OVERLAY_TEXTURE_COORD.y - noise.r * 0.01, 0.0, 1.0);
     vec2 coord = OVERLAY_TEXTURE_COORD;
     if (pixelSize > 1.0) {
@@ -49,7 +54,7 @@ vec3 textLayer(vec4 noise) {
 
     coord += vec2(layerColor.g, 0.0);
 
-    return layerColor * texture(LAYER, coord).rgb;
+    return layerColor * texture(LAYER, coord).rgb * LAYER_ALPHA;
 }
 
 void main() {
