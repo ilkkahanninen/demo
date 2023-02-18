@@ -48,7 +48,7 @@ export class Clock {
   }
 
   seconds(): number {
-    return ((this.pauseTime || new Date().getTime()) - this.startTime) * 0.0001;
+    return ((this.pauseTime || new Date().getTime()) - this.startTime) * 0.001;
   }
 
   beats(): number {

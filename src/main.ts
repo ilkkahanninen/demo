@@ -16,6 +16,7 @@ import blurYSrc from "./scene/blurY.frag";
 import defaultVertexSrc from "./scene/default.vert";
 import pallotTunnelissaSrc from "./scene/pallotTunnelissa.frag";
 import postprocessSrc from "./scene/postprocess.frag";
+import { layerFx } from "./script";
 import { Texture } from "./Texture";
 
 document.body.style.background = "#000";
@@ -181,7 +182,7 @@ waitFor(material).then(() => {
       postprocess.set({
         NOISE_POS: vec2(Math.random(), Math.random()),
         TIME: time,
-        LAYER_FX: 0.15,
+        LAYER_FX: layerFx.get(time),
       });
       screen.render();
     });
