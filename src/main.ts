@@ -54,9 +54,9 @@ const framebuffer = new FrameBuffer(
 );
 const noise = new NoiseBuffer(gl, 1024);
 
-const mattCurrent = new Texture(
+const layerManifesto = new Texture(
   gl,
-  new URL("layers/mattcurrent.png", import.meta.url)
+  new URL("layers/Intro.png", import.meta.url)
 );
 
 waitFor(material).then(() => {
@@ -177,10 +177,11 @@ waitFor(material).then(() => {
       framebuffer.useAt(gl.TEXTURE0);
       noise.useAt(gl.TEXTURE1);
       bloomBufferA.useAt(gl.TEXTURE2);
-      mattCurrent.useAt(gl.TEXTURE3);
+      layerManifesto.useAt(gl.TEXTURE3);
       postprocess.set({
         NOISE_POS: vec2(Math.random(), Math.random()),
         TIME: time,
+        LAYER_FX: 0.15,
       });
       screen.render();
     });
