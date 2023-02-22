@@ -1,12 +1,15 @@
 import { config } from "./config";
 import {
+  add,
   barCalculator,
   beatCalculator,
+  cos,
   expr,
   hold,
   join,
   labels,
   linear,
+  sin,
   vector,
 } from "./scripting";
 
@@ -15,29 +18,31 @@ const bars = barCalculator(config.bpm, 4);
 
 const beat = beats(1);
 const bar = bars(1);
+const partLength = bars(16);
 
 // Camera
 
-const vemputus = (duration: number) =>
+const stillIntroCam = (duration: number) =>
   labels({
-    pos: vector([
-      expr((t) => 1.6 * 2.3 * Math.cos(t * 0.8))(duration),
-      expr((t) => 3.6 * Math.cos(t * 6.0))(duration),
-      expr((t) => 1.6 * 1.3 * Math.sin(t * 8.0))(duration),
-    ]),
-    lookAt: vector([
-      expr((t) => 1.5 * Math.cos(t * 2.0))(duration),
-      hold(0)(duration),
-      hold(0)(duration),
-    ]),
-    up: vector([
-      expr((t) => Math.sin(t * 0.1))(duration),
-      expr((t) => Math.cos(t * 0.12))(duration),
-      expr((t) => Math.sin(t * 0.17))(duration),
-    ]),
+    pos: vector(hold(0), hold(0), hold(10))(duration),
+    lookAt: vector(hold(0), hold(0), hold(0))(duration),
+    up: vector(sin(1, 0.1), hold(0), cos(1, 0.1))(duration),
+    fov: hold(60.0)(duration),
   });
 
-const camera = vemputus(1000.0);
+const vemputusCam = (duration: number) =>
+  labels({
+    pos: vector(cos(3.68, 0.2), cos(3.6, 1.2), sin(2.08, 1.3))(duration),
+    lookAt: vector(cos(1.5, 0.6), hold(0), hold(0))(duration),
+    up: vector(
+      expr((t) => Math.sin(t * 0.1)),
+      expr((t) => Math.cos(t * 0.12)),
+      expr((t) => Math.sin(t * 0.17))
+    )(duration),
+    fov: add(60.0)(sin(40.0, 0.1))(duration),
+  });
+
+const camera = join(stillIntroCam(partLength), vemputusCam(1000.0));
 
 // Overlays
 
@@ -51,17 +56,22 @@ const overlayFx = (duration: number) =>
     linear(0.015, 1.0)(duration * 0.25)
   );
 
+const noOverlay = labels({
+  texture: noTexture(partLength),
+  fx: hold(0)(partLength),
+});
+
 const introOverlay = labels({
-  texture: join(introTex(4 * bar), noTexture(0)),
-  fx: overlayFx(4 * bar),
+  texture: join(introTex(partLength), noTexture(0)),
+  fx: overlayFx(partLength),
 });
 
 const mattCurrentOverlay = labels({
-  texture: join(mattCurrentTex(2 * bar), noTexture(0)),
-  fx: overlayFx(2 * bar),
+  texture: join(mattCurrentTex(partLength), noTexture(0)),
+  fx: overlayFx(partLength),
 });
 
-const overlay = join(introOverlay, mattCurrentOverlay);
+const overlay = join(noOverlay, introOverlay, mattCurrentOverlay);
 
 // Main script
 

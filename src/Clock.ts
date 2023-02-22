@@ -1,14 +1,18 @@
+import { Music } from "./audio";
+
 export class Clock {
   bpm: number;
   startTime = 0;
   pauseTime: number | null = null;
   pendingRender: (() => void) | null = null;
+  music: Music;
 
-  constructor(beatsPerMinute: number) {
+  constructor(beatsPerMinute: number, music: Music) {
     this.bpm = beatsPerMinute;
+    this.music = music;
 
     window.addEventListener("keydown", (event) => {
-      console.log("down", event.code);
+      // console.log("down", event.code);
       switch (event.code) {
         case "Space":
           return this.pauseTime ? this.resume() : this.pause();
@@ -23,11 +27,17 @@ export class Clock {
   reset(): void {
     this.pauseTime = null;
     this.startTime = new Date().getTime();
+    console.log(this.music.audio);
+    if (this.music.audio) {
+      this.music.audio.currentTime = 0;
+      this.music.audio.play();
+    }
   }
 
   pause(): void {
     if (!this.pauseTime) {
       this.pauseTime = new Date().getTime();
+      this.music.audio?.pause();
     }
   }
 
@@ -36,6 +46,7 @@ export class Clock {
       this.startTime += new Date().getTime() - this.pauseTime;
       this.pauseTime = null;
       this.pendingRender && this.requestNextFrame(this.pendingRender);
+      this.music.audio?.play();
     }
   }
 

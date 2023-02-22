@@ -76,10 +76,43 @@ export const labels = <T extends object>(obj: {
   };
 };
 
-export const vector = <T>(arr: BoundSegment<T>[]): BoundSegment<T[]> => {
-  const duration = arr.reduce((acc, seg) => Math.max(acc, seg.duration), 0);
-  return {
-    get: (time: number) => arr.map((seg) => seg.get(time)),
-    duration,
+export const vector =
+  <T>(...arr: Segment<T>[]) =>
+  (duration: number): BoundSegment<T[]> => {
+    const segments = arr.map((a) => a(duration));
+    return {
+      get: (time: number) => segments.map((seg) => seg.get(time)),
+      duration,
+    };
   };
+
+export const sin = (
+  amplitude: number,
+  hz: number,
+  phase: number = 0
+): Segment<number> => {
+  const coef = Math.PI * 0.002 * hz;
+  return expr((t) => amplitude * Math.sin(t * coef + phase));
 };
+
+export const cos = (
+  amplitude: number,
+  hz: number,
+  phase: number = 0
+): Segment<number> => {
+  const coef = Math.PI * 0.002 * hz;
+  return expr((t) => amplitude * Math.cos(t * coef + phase));
+};
+
+export const map =
+  <T>(f: (a: T) => T) =>
+  (seg: Segment<T>): Segment<T> =>
+  (duration) => {
+    const bound = seg(duration);
+    return {
+      get: (time) => f(bound.get(time)),
+      duration,
+    };
+  };
+
+export const add = (n: number) => map((a: number) => a + n);

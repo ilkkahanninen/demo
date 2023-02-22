@@ -30,6 +30,7 @@ uniform float TIME;
 uniform vec3 CAMERA_POS;
 uniform vec3 CAMERA_LOOKAT;
 uniform vec3 CAMERA_UP;
+uniform float CAMERA_FOV;
 
 const int OUT_OF_VIEW = -1;
 const int SPHERE = 0;
@@ -56,9 +57,9 @@ result opUnion(result a, result b) {
 const int NUMBER_OF_LIGHTS = 4;
 
 vec3 lightPosition(int index) {
-  float x = sin(TIME * 20.0 + float(index) * 1.1);
-  float z = cos(TIME * 20.0 + float(index) * 0.76);
-  float y = 5.0 * cos(TIME * 2.0 + float(index) * 0.98);
+  float x = sin(TIME * 2.0 + float(index) * 1.1);
+  float z = cos(TIME * 2.0 + float(index) * 0.76);
+  float y = 5.0 * cos(TIME * .2 + float(index) * 0.98);
   return 2.0 * vec3(x, y, z);
 }
 
@@ -81,7 +82,7 @@ result lightOrbs(vec3 p) {
 // Pallot
 
 result sphere(vec3 samplePoint) {
-  float distort = 0.005 * sin(TIME) * sin(samplePoint.x * 15.0) * sin(samplePoint.y * 15.0) * sin(samplePoint.z * 15.0);
+  float distort = 0.005 * sin(TIME * 0.1) * sin(samplePoint.x * 15.0) * sin(samplePoint.y * 15.0) * sin(samplePoint.z * 15.0);
   return result(length(samplePoint) - 1.0 + distort, samplePoint, SPHERE);
 }
 
@@ -104,7 +105,6 @@ vec2 tunnelUvMap(vec3 p) {
 }
 
 result tunnel(vec3 p) {
-  // p.y += TIME * 8.0;
   float d = -length(p.xz) + 5.0;
   // float d2 = -length(p.xz) + 4.97;
   float wave = 0.05 * sin(p.y * 4.0);
@@ -147,7 +147,7 @@ vec2 staircaseUvMap(vec3 p) {
 }
 
 result staircase(vec3 p) {
-  float k = TIME * 0.1;
+  float k = TIME * 0.01;
   float c = cos(k * p.y);
   float s = sin(k * p.y);
   mat2 m = mat2(c, s, -s, c);
@@ -176,7 +176,7 @@ vec3 ballPos(int index) {
   if (index == 0) {
     return CAMERA_LOOKAT;
   }
-  return CAMERA_LOOKAT + vec3(sin(TIME * 6.0));
+  return CAMERA_LOOKAT + vec3(sin(TIME * 0.6));
 }
 
 result render(vec3 p) {
@@ -405,12 +405,7 @@ vec3 rayDirection(float fieldOfView, vec2 size, vec2 fragCoord) {
 void main() {
   vec3 color = vec3(0.0);
 
-  #ifdef RENDER_ENVIRONMENT_MAP
-  float fieldOfView = 90.0;
-  #else
-  float fieldOfView = 110.0 + 40.0 * sin(TIME * 5.0);
-  #endif
-
+  float fieldOfView = CAMERA_FOV;
   vec3 viewDir = rayDirection(fieldOfView, RESOLUTION.xy, gl_FragCoord.xy);
   vec3 worldDir = (VIEW_MATRIX * vec4(viewDir, 0.0)).xyz;
 

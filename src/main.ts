@@ -5,6 +5,7 @@ import { waitFor } from "./Resource";
 import { ShaderProgram } from "./ShaderProgram";
 import { vec2, vec3 } from "./vectors";
 
+import { Music } from "./audio";
 import { config } from "./config";
 import { CubeMapBuffer } from "./CubeMapBuffer";
 import { FrameBuffer } from "./FrameBuffer";
@@ -60,7 +61,9 @@ const layers = [
   new URL("layers/Matt Current.png", import.meta.url),
 ].map((url) => new Texture(gl, url));
 
-waitFor(material, ...layers).then(() => {
+const music = new Music(new URL("j9-alberga-calculus.mp3", import.meta.url));
+
+waitFor(music, material, ...layers).then(() => {
   const screen = new Rectangle(gl);
 
   const balls = new ShaderProgram(gl, defaultVertexSrc, pallotTunnelissaSrc);
@@ -104,7 +107,7 @@ waitFor(material, ...layers).then(() => {
   const postprocess = new ShaderProgram(gl, defaultVertexSrc, postprocessSrc);
   postprocess.setupSamplers("FRAME", "NOISE", "BLOOM", "LAYER");
 
-  const clock = new Clock(config.bpm);
+  const clock = new Clock(config.bpm, music);
 
   const renderNext = () => {
     const time = clock.seconds();
@@ -119,6 +122,7 @@ waitFor(material, ...layers).then(() => {
         CAMERA_POS: vec3(0.0, 0.0, 0.0),
         CAMERA_LOOKAT: direction,
         CAMERA_UP: up,
+        CAMERA_FOV: 90,
       });
       material.bindAt(gl.TEXTURE0);
       screen.render();
@@ -134,6 +138,7 @@ waitFor(material, ...layers).then(() => {
         CAMERA_POS: state.camera.pos,
         CAMERA_LOOKAT: state.camera.lookAt,
         CAMERA_UP: state.camera.up,
+        CAMERA_FOV: state.camera.fov,
       });
 
       screen.render();
