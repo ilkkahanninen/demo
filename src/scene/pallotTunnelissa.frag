@@ -186,7 +186,9 @@ result render(vec3 p) {
   } else if (ENV_GEOMETRY == 2.0) {
     env = opUnion(hommeli(p), env);
   } else if (ENV_GEOMETRY == 3.0) {
-
+    env = opUnion(glitch(p), env);
+  } else if (ENV_GEOMETRY == 4.0) {
+    env = opUnion(glitch2(p), env);
   }
 
   #ifdef RENDER_ENVIRONMENT_MAP

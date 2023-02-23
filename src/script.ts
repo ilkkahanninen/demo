@@ -23,7 +23,7 @@ const bar = bars(1);
 const tunnelCam = (duration: number) =>
   labels({
     pos: join(
-      vector(hold(0), linear(30, 7), hold(0))(duration / 2),
+      vector(hold(0), linear(-30, -7), hold(0))(duration / 2),
       vector(hold(0), linear(3, 6), hold(0))(duration / 2)
     ),
     lookAt: vector(sin(1, 0.2), cos(1, 0.21), sin(1, 0.12))(duration),
@@ -74,6 +74,8 @@ const mattCurrentOverlay = (length: number) =>
 const onlyLights = hold(0);
 const tunnel = hold(1);
 const hommeli = hold(2);
+const glitch = hold(3);
+const glitch2 = hold(4);
 
 // Main script
 
@@ -84,7 +86,11 @@ const jeba = hold(1);
 const partShadows = (length: number) =>
   labels({
     camera: shadowsCam(length),
-    overlay: noOverlay(length),
+    overlay: join(
+      noOverlay(length / 2),
+      mattCurrentOverlay(length / 4),
+      mattCurrentOverlay(length / 4)
+    ),
     envGeometry: hommeli(length),
     envFactor: linear(0, 0.001)(length),
     lightCount: hold(4)(length),
@@ -97,8 +103,33 @@ const partTunnel = (length: number) =>
     overlay: noOverlay(length),
     envGeometry: tunnel(length),
     envFactor: zero(length),
-    lightCount: join(hold(1)(length / 2), hold(3)(length / 2)),
+    lightCount: join(hold(2)(length / 2), hold(3)(length / 2)),
     renderBalls: jeba(length),
   });
 
-export const script = join(partShadows(bars(16)), partTunnel(bars(16)));
+const partGlitch = (length: number) =>
+  labels({
+    camera: tunnelCam(length),
+    overlay: noOverlay(length),
+    envGeometry: glitch(length),
+    envFactor: zero(length),
+    lightCount: join(hold(2)(length / 2), hold(3)(length / 2)),
+    renderBalls: jeba(length),
+  });
+
+const partGlitch2 = (length: number) =>
+  labels({
+    camera: tunnelCam(length),
+    overlay: noOverlay(length),
+    envGeometry: glitch2(length),
+    envFactor: zero(length),
+    lightCount: join(hold(2)(length / 2), hold(3)(length / 2)),
+    renderBalls: jeba(length),
+  });
+
+export const script = join(
+  partShadows(bars(16)),
+  partTunnel(bars(16)),
+  partGlitch(bars(4)),
+  partGlitch2(bars(16))
+);
