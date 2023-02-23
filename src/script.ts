@@ -41,9 +41,11 @@ const shadowsCam = (duration: number) =>
 
 // Overlays
 
-const noTexture = hold(-1);
-const introTex = hold(0);
-const mattCurrentTex = hold(1);
+const noTexture = -1;
+const realtimePhong = 0;
+const jumalautaTex = 1;
+const jumalautaLogosTex = 2;
+
 const overlayFx = (duration: number) =>
   join(
     linear(1.0, 0.015)(duration * 0.25),
@@ -51,21 +53,9 @@ const overlayFx = (duration: number) =>
     linear(0.015, 1.0)(duration * 0.25)
   );
 
-const noOverlay = (length: number) =>
+const overlay = (index: number, length: number) =>
   labels({
-    texture: noTexture(length),
-    fx: hold(0)(length),
-  });
-
-const introOverlay = (length: number) =>
-  labels({
-    texture: join(introTex(length), noTexture(0)),
-    fx: overlayFx(length),
-  });
-
-const mattCurrentOverlay = (length: number) =>
-  labels({
-    texture: join(mattCurrentTex(length), noTexture(0)),
+    texture: hold(index)(length),
     fx: overlayFx(length),
   });
 
@@ -87,9 +77,9 @@ const partShadows = (length: number) =>
   labels({
     camera: shadowsCam(length),
     overlay: join(
-      noOverlay(length / 2),
-      mattCurrentOverlay(length / 4),
-      mattCurrentOverlay(length / 4)
+      overlay(noTexture, length / 2),
+      overlay(jumalautaTex, length / 4),
+      overlay(jumalautaLogosTex, length / 4)
     ),
     envGeometry: hommeli(length),
     envFactor: linear(0, 0.001)(length),
@@ -100,7 +90,7 @@ const partShadows = (length: number) =>
 const partTunnel = (length: number) =>
   labels({
     camera: tunnelCam(length),
-    overlay: noOverlay(length),
+    overlay: overlay(noTexture, length),
     envGeometry: tunnel(length),
     envFactor: zero(length),
     lightCount: join(hold(2)(length / 2), hold(3)(length / 2)),
@@ -110,7 +100,7 @@ const partTunnel = (length: number) =>
 const partGlitch = (length: number) =>
   labels({
     camera: tunnelCam(length),
-    overlay: noOverlay(length),
+    overlay: overlay(noTexture, length),
     envGeometry: glitch(length),
     envFactor: zero(length),
     lightCount: join(hold(2)(length / 2), hold(3)(length / 2)),
@@ -120,7 +110,7 @@ const partGlitch = (length: number) =>
 const partGlitch2 = (length: number) =>
   labels({
     camera: tunnelCam(length),
-    overlay: noOverlay(length),
+    overlay: overlay(noTexture, length),
     envGeometry: glitch2(length),
     envFactor: zero(length),
     lightCount: join(hold(2)(length / 2), hold(3)(length / 2)),

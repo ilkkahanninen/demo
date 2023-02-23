@@ -57,8 +57,9 @@ const framebuffer = new FrameBuffer(
 const noise = new NoiseBuffer(gl, 1024);
 
 const layers = [
-  new URL("layers/Intro.png", import.meta.url),
-  new URL("layers/Matt Current.png", import.meta.url),
+  new URL("layers/phong.png", import.meta.url),
+  new URL("layers/jumalauta.png", import.meta.url),
+  new URL("layers/jumalauta_logos.png", import.meta.url),
 ].map((url) => new Texture(gl, url));
 
 const music = new Music(new URL("j9-alberga-calculus.mp3", import.meta.url));
