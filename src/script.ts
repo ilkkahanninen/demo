@@ -4,7 +4,6 @@ import {
   barCalculator,
   beatCalculator,
   cos,
-  expr,
   hold,
   join,
   labels,
@@ -18,31 +17,27 @@ const bars = barCalculator(config.bpm, 4);
 
 const beat = beats(1);
 const bar = bars(1);
-const partLength = bars(16);
 
 // Camera
 
-const stillIntroCam = (duration: number) =>
+const tunnelCam = (duration: number) =>
   labels({
-    pos: vector(hold(0), hold(0), hold(10))(duration),
-    lookAt: vector(hold(0), hold(0), hold(0))(duration),
+    pos: join(
+      vector(hold(0), linear(30, 7), hold(0))(duration / 2),
+      vector(hold(0), linear(3, 6), hold(0))(duration / 2)
+    ),
+    lookAt: vector(sin(1, 0.2), cos(1, 0.21), sin(1, 0.12))(duration),
     up: vector(sin(1, 0.1), hold(0), cos(1, 0.1))(duration),
     fov: hold(60.0)(duration),
   });
 
-const vemputusCam = (duration: number) =>
+const shadowsCam = (duration: number) =>
   labels({
-    pos: vector(cos(3.68, 0.2), cos(3.6, 1.2), sin(2.08, 1.3))(duration),
-    lookAt: vector(cos(1.5, 0.6), hold(0), hold(0))(duration),
-    up: vector(
-      expr((t) => Math.sin(t * 0.1)),
-      expr((t) => Math.cos(t * 0.12)),
-      expr((t) => Math.sin(t * 0.17))
-    )(duration),
-    fov: add(60.0)(sin(40.0, 0.1))(duration),
+    pos: vector(hold(0), hold(0), hold(0))(duration),
+    lookAt: vector(cos(1, 0.01), hold(0), sin(1, 0.01))(duration),
+    up: vector(hold(0.0), hold(1), hold(0.0))(duration),
+    fov: add(60.0)(sin(40.0, 0.03))(duration),
   });
-
-const camera = join(stillIntroCam(partLength), vemputusCam(1000.0));
 
 // Overlays
 
@@ -56,26 +51,54 @@ const overlayFx = (duration: number) =>
     linear(0.015, 1.0)(duration * 0.25)
   );
 
-const noOverlay = labels({
-  texture: noTexture(partLength),
-  fx: hold(0)(partLength),
-});
+const noOverlay = (length: number) =>
+  labels({
+    texture: noTexture(length),
+    fx: hold(0)(length),
+  });
 
-const introOverlay = labels({
-  texture: join(introTex(partLength), noTexture(0)),
-  fx: overlayFx(partLength),
-});
+const introOverlay = (length: number) =>
+  labels({
+    texture: join(introTex(length), noTexture(0)),
+    fx: overlayFx(length),
+  });
 
-const mattCurrentOverlay = labels({
-  texture: join(mattCurrentTex(partLength), noTexture(0)),
-  fx: overlayFx(partLength),
-});
+const mattCurrentOverlay = (length: number) =>
+  labels({
+    texture: join(mattCurrentTex(length), noTexture(0)),
+    fx: overlayFx(length),
+  });
 
-const overlay = join(noOverlay, introOverlay, mattCurrentOverlay);
+// Environment geometry
+
+const onlyLights = hold(0);
+const tunnel = hold(1);
+const hommeli = hold(2);
 
 // Main script
 
-export const script = labels({
-  camera,
-  overlay,
-});
+const zero = hold(0);
+const nope = zero;
+const jeba = hold(1);
+
+const partShadows = (length: number) =>
+  labels({
+    camera: shadowsCam(length),
+    overlay: noOverlay(length),
+    envGeometry: hommeli(length),
+    envFactor: linear(0, 0.001)(length),
+    lightCount: hold(4)(length),
+    renderBalls: nope(length),
+  });
+
+const partTunnel = (length: number) =>
+  labels({
+    camera: tunnelCam(length),
+    overlay: noOverlay(length),
+    envGeometry: tunnel(length),
+    envFactor: zero(length),
+    lightCount: join(hold(1)(length / 2), hold(3)(length / 2)),
+    renderBalls: jeba(length),
+  });
+
+export const script = join(partShadows(bars(16)), partTunnel(bars(16)));

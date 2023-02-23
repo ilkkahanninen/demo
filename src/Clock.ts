@@ -17,9 +17,9 @@ export class Clock {
         case "Space":
           return this.pauseTime ? this.resume() : this.pause();
         case "ArrowRight":
-          return this.forward(10);
+          return this.forward(10000);
         case "ArrowLeft":
-          return this.rewind(10);
+          return this.rewind(10000);
       }
     });
   }
@@ -52,10 +52,16 @@ export class Clock {
 
   forward(milliseconds: number) {
     this.startTime -= milliseconds;
+    if (this.music.audio) {
+      this.music.audio.currentTime = this.seconds();
+    }
   }
 
   rewind(milliseconds: number) {
     this.startTime += milliseconds;
+    if (this.music.audio) {
+      this.music.audio.currentTime = this.seconds();
+    }
   }
 
   seconds(): number {

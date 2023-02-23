@@ -123,6 +123,9 @@ waitFor(music, material, ...layers).then(() => {
         CAMERA_LOOKAT: direction,
         CAMERA_UP: up,
         CAMERA_FOV: 90,
+        ENV_GEOMETRY: state.envGeometry,
+        ENV_FACTOR: state.envFactor,
+        NUMBER_OF_LIGHTS: state.lightCount,
       });
       material.bindAt(gl.TEXTURE0);
       screen.render();
@@ -139,6 +142,10 @@ waitFor(music, material, ...layers).then(() => {
         CAMERA_LOOKAT: state.camera.lookAt,
         CAMERA_UP: state.camera.up,
         CAMERA_FOV: state.camera.fov,
+        ENV_GEOMETRY: state.envGeometry,
+        ENV_FACTOR: state.envFactor,
+        NUMBER_OF_LIGHTS: state.lightCount,
+        RENDER_BALLS: state.renderBalls,
       });
 
       screen.render();

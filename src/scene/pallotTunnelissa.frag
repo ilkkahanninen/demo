@@ -31,13 +31,17 @@ uniform vec3 CAMERA_POS;
 uniform vec3 CAMERA_LOOKAT;
 uniform vec3 CAMERA_UP;
 uniform float CAMERA_FOV;
+uniform float ENV_GEOMETRY;
+uniform float ENV_FACTOR;
+uniform float NUMBER_OF_LIGHTS;
+uniform float RENDER_BALLS;
 
 const int OUT_OF_VIEW = -1;
 const int SPHERE = 0;
 const int TUNNEL = 1;
 const int BOX = 2;
 const int LIGHT = 3;
-const int STAIRCASE = 4;
+const int HOMMELI = 4;
 
 struct result {
   float dist;
@@ -53,8 +57,6 @@ result opUnion(result a, result b) {
 }
 
 // Valojen sijainnit ja värit - TODO: nämäkin voisi siirtää täältä pois ja laskea vain kerran
-
-const int NUMBER_OF_LIGHTS = 4;
 
 vec3 lightPosition(int index) {
   float x = sin(TIME * 2.0 + float(index) * 1.1);
@@ -73,7 +75,7 @@ result lightOrb(vec3 p, int index) {
 
 result lightOrbs(vec3 p) {
   result l = lightOrb(p, 0);
-  for (int i = 1; i < NUMBER_OF_LIGHTS; i++) {
+  for (int i = 1; i < int(NUMBER_OF_LIGHTS); i++) {
     l = opUnion(l, lightOrb(p, i));
   }
   return l;
@@ -113,8 +115,6 @@ result tunnel(vec3 p) {
   return result(t, p, TUNNEL);
 }
 
-// Portaikko
-
 result glitch(vec3 p) {
   // vec2 dir = normalize(p.xz);
   // float angle = atan(dir.x, dir.y);
@@ -139,15 +139,15 @@ result glitch2(vec3 p) {
   return result(d, q, TUNNEL);
 }
 
-vec2 staircaseUvMap(vec3 p) {
+vec2 hommeliUvMap(vec3 p) {
   vec3 d = normalize(p);
   float u = 0.5 + atan(d.z, d.x) / (2.0 * PI);
   float dst = length(p.xz) * 0.05;
   return vec2(u + dst, p.y * 0.05);
 }
 
-result staircase(vec3 p) {
-  float k = TIME * 0.01;
+result hommeli(vec3 p) {
+  float k = ENV_FACTOR;
   float c = cos(k * p.y);
   float s = sin(k * p.y);
   mat2 m = mat2(c, s, -s, c);
@@ -158,7 +158,7 @@ result staircase(vec3 p) {
   float d2b = q.x;
   float d = min(d1, max(d2c, d2b));
 
-  return result(-d, q, STAIRCASE);
+  return result(-d, q, HOMMELI);
 }
 
 // Kuutio
@@ -180,12 +180,21 @@ vec3 ballPos(int index) {
 }
 
 result render(vec3 p) {
-  // result env = opUnion(tunnel(p), lightOrbs(p));
-  result env = opUnion(staircase(p), lightOrbs(p));
+  result env = lightOrbs(p);
+  if (ENV_GEOMETRY == 1.0) {
+    env = opUnion(tunnel(p), env);
+  } else if (ENV_GEOMETRY == 2.0) {
+    env = opUnion(hommeli(p), env);
+  } else if (ENV_GEOMETRY == 3.0) {
+
+  }
 
   #ifdef RENDER_ENVIRONMENT_MAP
   return env;
   #endif
+  if (RENDER_BALLS == 0.0) {
+    return env;
+  }
 
   vec3 p1 = p - ballPos(0);
   vec3 p2 = p + ballPos(1);
@@ -282,7 +291,7 @@ vec3 pbrReflectance(vec3 p, vec3 eye, vec3 albedo, float metallic, float roughne
   F0 = mix(F0, albedo, metallic);
 
   vec3 lightColorSum = vec3(0.0);
-  for (int i = 0; i < NUMBER_OF_LIGHTS; i++) {
+  for (int i = 0; i < int(NUMBER_OF_LIGHTS); i++) {
     vec3 lightPos = lightPosition(i);
 
     float distance = length(lightPos - p);
@@ -370,8 +379,8 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
     return color * vec3(0.25, 0.5, 1.0);
   }
 
-  if (r.kind == STAIRCASE) {
-    vec2 uv = staircaseUvMap(r.p);
+  if (r.kind == HOMMELI) {
+    vec2 uv = hommeliUvMap(r.p);
 
     vec3 albedo = texture(ALBEDO_SAMPLER, uv).rgb;
     float metallic = texture(METALLIC_SAMPLER, uv).r;
@@ -413,7 +422,7 @@ void main() {
 
   if (hitInfo.dist > MAX_DIST - EPSILON) {
     // Didn't hit anything
-    color = vec3(0.2, 0.0, 0.0);
+    color = vec3(0.0, 0.0, 0.0);
   } else {
     vec3 p = CAMERA_POS + hitInfo.dist * worldDir;
     color = calcMaterial(p, CAMERA_POS, hitInfo);

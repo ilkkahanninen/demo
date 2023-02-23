@@ -91,7 +91,7 @@ export const sin = (
   hz: number,
   phase: number = 0
 ): Segment<number> => {
-  const coef = Math.PI * 0.002 * hz;
+  const coef = Math.PI * 2 * hz;
   return expr((t) => amplitude * Math.sin(t * coef + phase));
 };
 
@@ -100,7 +100,7 @@ export const cos = (
   hz: number,
   phase: number = 0
 ): Segment<number> => {
-  const coef = Math.PI * 0.002 * hz;
+  const coef = Math.PI * 2 * hz;
   return expr((t) => amplitude * Math.cos(t * coef + phase));
 };
 
