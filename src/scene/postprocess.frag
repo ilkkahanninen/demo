@@ -43,16 +43,19 @@ vec3 textLayer(vec4 noise) {
         coord /= RESOLUTION;
     }
 
-    vec3 layerColor = vec3(0.8, 1.0, 0.0);
+    vec3 layerColor = vec3(1.0);
     if (pixelSize > 0.0) {
         float a = 0.5 + sin(round(TIME * 71.0));
         float b = 0.5 + sin(round(TIME * 33.0));
         float layerY1 = min(a, b);
         float layerY2 = max(a, b);
-        layerColor = OVERLAY_TEXTURE_COORD.y > layerY1 && OVERLAY_TEXTURE_COORD.y < layerY2 ? vec3(0.8, 1.0, 0.0) : vec3(noise.r, noise.g * 0.005 - 0.0025, 0.0);
+        if (OVERLAY_TEXTURE_COORD.y > layerY1 && OVERLAY_TEXTURE_COORD.y < layerY2) {
+            layerColor = vec3(1.0, 1.0, 1.0);
+        } else {
+            layerColor = vec3(noise.r, 0.0, 0.0);
+            coord += vec2(noise.g * 0.005 - 0.0025, 0.0);
+        }
     }
-
-    coord += vec2(layerColor.g, 0.0);
 
     return layerColor * texture(LAYER, coord).rgb * LAYER_ALPHA;
 }
