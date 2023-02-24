@@ -48,10 +48,6 @@ if (process.env.NODE_ENV !== "production") {
   }
 }
 
-const beatenUpMaterial = getBeatenUpMetal(gl);
-const rustingLinedMetalMaterial = getRustingLinedMetal(gl);
-const usedStainlessSteelMaterial = getUsedStainlessSteel(gl);
-
 const environmentMap = new CubeMapBuffer(gl, 512);
 const framebuffer = new FrameBuffer(
   gl,
@@ -70,9 +66,15 @@ const layers = [
   new URL("layers/svga.png", import.meta.url),
 ].map((url) => new Texture(gl, url));
 
+const materials = [
+  getBeatenUpMetal(gl),
+  getRustingLinedMetal(gl),
+  getUsedStainlessSteel(gl),
+];
+
 const music = new Music(new URL("j9-alberga-calculus.mp3", import.meta.url));
 
-waitFor(music, metalMaterial, beatenUpMaterial, ...layers).then(() => {
+waitFor(music, ...materials, ...layers).then(() => {
   const screen = new Rectangle(gl);
 
   const balls = new ShaderProgram(gl, defaultVertexSrc, pallotTunnelissaSrc);
@@ -121,7 +123,7 @@ waitFor(music, metalMaterial, beatenUpMaterial, ...layers).then(() => {
   const renderNext = () => {
     const time = clock.seconds();
     const state = script.get(time);
-    const material = usedStainlessSteelMaterial;
+    const material = materials[0];
 
     screen.bind(vertexPos, overlayTexturePos);
 

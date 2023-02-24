@@ -116,3 +116,13 @@ export const map =
   };
 
 export const add = (n: number) => map((a: number) => a + n);
+
+export const sampleAndHold = <T>(
+  sampleLength: number,
+  seg: BoundSegment<T>
+): BoundSegment<T> => {
+  return {
+    get: (time) => seg.get(Math.floor(time * sampleLength) / sampleLength),
+    duration: seg.duration,
+  };
+};

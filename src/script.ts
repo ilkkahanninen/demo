@@ -8,6 +8,7 @@ import {
   join,
   labels,
   linear,
+  sampleAndHold,
   sin,
   vector,
 } from "./scripting";
@@ -169,7 +170,36 @@ const partGlitch2 = (length: number) =>
     renderBalls: jeba(length),
   });
 
+// Part: Second tunnel
+
+const tunnel2Cam = (duration: number) =>
+  labels({
+    pos: sampleAndHold(
+      beat,
+      vector(hold(0), hold(-1.5), sin(6, 0.08))(duration)
+    ),
+    lookAt: vector(hold(0), hold(0), hold(1))(duration),
+    up: vector(sin(1, 0.1), hold(0), cos(1, 0.1))(duration),
+    fov: add(80)(sin(10.0, 0.17))(duration),
+  });
+
+const partTunnel2 = (length: number) =>
+  labels({
+    camera: tunnel2Cam(length),
+    overlay: overlay(noTexture, length),
+    envGeometry: hommeli(length),
+    envFactor: join(
+      sin(0.1, 0.1)((length * 7) / 16),
+      linear(0.1, 3)(length / 16),
+      add(3)(sin(0.1, 0.1))((length * 7) / 16),
+      linear(3.1, 0)(length / 16)
+    ),
+    lightCount: join(hold(2)(length / 2), hold(3)(length / 2)),
+    renderBalls: jeba(length),
+  });
+
 export const script = join(
+  partTunnel2(bars(16)),
   partShadows(bars(16)),
   partTunnel(bars(16)),
   partGlitch(bars(4)),
