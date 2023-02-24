@@ -1,5 +1,4 @@
 import { Clock } from "./Clock";
-import { getMetal } from "./materials/metal/Metal";
 import { Rectangle } from "./Rectangle";
 import { waitFor } from "./Resource";
 import { ShaderProgram } from "./ShaderProgram";
@@ -10,6 +9,9 @@ import { config } from "./config";
 import { CubeMapBuffer } from "./CubeMapBuffer";
 import { FrameBuffer } from "./FrameBuffer";
 import { renderCanvas } from "./FrameContext";
+import { getBeatenUpMetal } from "./materials/beaten-up-metal1-bl/BeatenUpMetal";
+import { getRustingLinedMetal } from "./materials/rusting-lined-metal2-bl/RustingLinedMetal";
+import { getUsedStainlessSteel } from "./materials/used-stainless-steel2-bl/UsedStainlessSteel";
 import { NoiseBuffer } from "./NoiseBuffer";
 import bloomCopySrc from "./scene/bloomCopy.frag";
 import blurXSrc from "./scene/blurX.frag";
@@ -46,7 +48,9 @@ if (process.env.NODE_ENV !== "production") {
   }
 }
 
-const material = getMetal(gl);
+const beatenUpMaterial = getBeatenUpMetal(gl);
+const rustingLinedMetalMaterial = getRustingLinedMetal(gl);
+const usedStainlessSteelMaterial = getUsedStainlessSteel(gl);
 
 const environmentMap = new CubeMapBuffer(gl, 512);
 const framebuffer = new FrameBuffer(
@@ -60,11 +64,15 @@ const layers = [
   new URL("layers/phong.png", import.meta.url),
   new URL("layers/jumalauta.png", import.meta.url),
   new URL("layers/jumalauta_logos.png", import.meta.url),
+  new URL("layers/phong.png", import.meta.url),
+  new URL("layers/gourand.png", import.meta.url),
+  new URL("layers/grid.png", import.meta.url),
+  new URL("layers/svga.png", import.meta.url),
 ].map((url) => new Texture(gl, url));
 
 const music = new Music(new URL("j9-alberga-calculus.mp3", import.meta.url));
 
-waitFor(music, material, ...layers).then(() => {
+waitFor(music, metalMaterial, beatenUpMaterial, ...layers).then(() => {
   const screen = new Rectangle(gl);
 
   const balls = new ShaderProgram(gl, defaultVertexSrc, pallotTunnelissaSrc);
@@ -113,11 +121,13 @@ waitFor(music, material, ...layers).then(() => {
   const renderNext = () => {
     const time = clock.seconds();
     const state = script.get(time);
+    const material = usedStainlessSteelMaterial;
 
     screen.bind(vertexPos, overlayTexturePos);
 
     // Rendataan ympäristö kuutioon
     environmentMap.renderToItself(ballsEnv, (direction, up) => {
+      material.bindAt(gl.TEXTURE0);
       ballsEnv.set({
         TIME: time,
         CAMERA_POS: vec3(0.0, 0.0, 0.0),
@@ -128,7 +138,6 @@ waitFor(music, material, ...layers).then(() => {
         ENV_FACTOR: state.envFactor,
         NUMBER_OF_LIGHTS: state.lightCount,
       });
-      material.bindAt(gl.TEXTURE0);
       screen.render();
     });
 
