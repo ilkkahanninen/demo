@@ -231,6 +231,7 @@ waitFor(music, ...materials, ...layers).then(() => {
         TIME: time,
         LAYER_FX: state.overlay.fx,
         LAYER_ALPHA: state.overlay.texture >= 0 ? 1 : 0,
+        NOISE_STRENGTH: state.noise,
       });
       screen.render();
     });

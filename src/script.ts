@@ -98,6 +98,11 @@ const partShadows = (length: number) =>
     material: beatenUpMetal(length),
     shader: palloShader(length),
     lightIntensity: join(linear(0, 1)(length / 2), hold(1)(length / 2)),
+    noise: join(
+      linear(0.16, 0.08)(length / 2),
+      hold(0.08)(length * (3 / 8)),
+      linear(0.08, 0.5)(length * (1 / 8))
+    ),
   });
 
 // Part: First tunnel
@@ -129,6 +134,11 @@ const partTunnel = (length: number) =>
     material: join(rustingLinedMetal(length / 2), beatenUpMetal(length / 2)),
     shader: palloShader(length),
     lightIntensity: offset(beat, repeat(32, linear(2, 0.1)(length / 32))),
+    noise: join(
+      linear(0.5, 0.08)(length / 8),
+      hold(0.08)(length * (6 / 8)),
+      linear(0.08, 0.5)(length / 8)
+    ),
   });
 
 // Part: glitch 1
@@ -156,6 +166,7 @@ const partGlitch = (length: number) =>
     material: beatenUpMetal(length),
     shader: palloShader(length),
     lightIntensity: hold(1)(length),
+    noise: join(linear(0.5, 0.08)(length / 2), linear(0.08, 0.5)(length / 2)),
   });
 
 // Part glitch 2
@@ -198,6 +209,7 @@ const partGlitch2 = (length: number) =>
     material: beatenUpMetal(length),
     shader: palloShader(length),
     lightIntensity: hold(1)(length),
+    noise: join(hold(0.08)(length * (7 / 8)), linear(0.08, 0.5)(length / 8)),
   });
 
 // Part: Second tunnel
@@ -241,6 +253,7 @@ const partTunnel2 = (length: number) =>
     material: rustingLinedMetal(length),
     shader: palloShader(length),
     lightIntensity: repeat(128, linear(3, 0)(length / 128)),
+    noise: join(hold(0.16)(length * (7 / 8)), linear(0.16, 0.32)(length / 8)),
   });
 
 // Part: joku muoto
@@ -267,6 +280,11 @@ const partJokuMuoto = (length: number) =>
     material: stainlessSteel(length),
     shader: jokuMuotoShader(length),
     lightIntensity: offset(2 * beat, repeat(16, linear(1, 0)(length / 16))),
+    noise: join(
+      linear(0.5, 0.08)(length / 8),
+      hold(0.08)(length * (6 / 8)),
+      linear(0.08, 0.5)(length / 8)
+    ),
   });
 
 // Part: joku muoto cont.
@@ -274,13 +292,13 @@ const partJokuMuoto = (length: number) =>
 const jokuMuoto2Cam = (duration: number) =>
   labels({
     pos: sampleAndHold(
-      beat * 2,
-      vector(sin(3, 10.072), cos(3, 14.08), sin(3, 89.08))(duration)
+      beat * 8,
+      vector(sin(3, 10.072), sin(3, 14.08), cos(2.8, 89.08))(duration)
     ),
     lookAt: vector(
-      sin(0.1, 1.072),
-      cos(0.1, 1.108),
-      sin(0.1, -0.408)
+      sin(0.02, 1.072),
+      cos(0.02, 1.108),
+      sin(0.02, -0.408)
     )(duration),
     up: vector(sin(3, 0.072), cos(3, -0.08), sin(3, -0.08))(duration),
     fov: sampleAndHold(beat * 4, add(90)(sin(40.0, 99.17))(duration)),
@@ -299,7 +317,12 @@ const partJokuMuoto2 = (length: number) =>
     renderBalls: linear(0, 1)(length),
     material: stainlessSteel(length),
     shader: jokuMuotoShader(length),
-    lightIntensity: repeat(64, linear(2, 0)(length / 64)),
+    lightIntensity: offset(length / 64, repeat(32, linear(2, 0)(length / 32))),
+    noise: join(
+      linear(0.5, 0.08)(length / 8),
+      repeat(6, linear(0.24, 0.08)(length / 8)),
+      linear(0.08, 0.5)(length / 8)
+    ),
   });
 
 // Part: outro
@@ -334,7 +357,8 @@ const partOutro = (length: number) =>
     material: stainlessSteel(length),
     shader: jokuMuotoShader(length),
     lightIntensity: join(
-      repeat(4, join(linear(0, 1)(length / 16), linear(1, 0)(length / 16))),
+      join(linear(10, 1)(length / 16), linear(1, 0)(length / 16)),
+      repeat(3, join(linear(0, 1)(length / 16), linear(1, 0)(length / 16))),
       linear(0, 1)(length / 16),
       linear(1, 0)(length / 16),
       linear(0, 0.5)(length / 16),
@@ -351,6 +375,11 @@ const partOutro = (length: number) =>
       linear(0.02, 0)(length / 16),
       linear(0, 0.01)(length / 16),
       linear(0.01, 0)(length / 16)
+    ),
+    noise: join(
+      linear(0.5, 0.08)(length / 4),
+      hold(0.08)(length / 4),
+      hold(0.24)(0)
     ),
   });
 

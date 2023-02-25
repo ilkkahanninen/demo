@@ -11,7 +11,7 @@ uniform vec2 NOISE_POS;
 // uniform vec2 RESOLUTION;
 const vec2 RESOLUTION = vec2(1920, 720);
 uniform float TIME;
-const float NOISE_STRENGTH = 0.08;
+uniform float NOISE_STRENGTH;
 uniform float LAYER_FX;
 uniform float LAYER_ALPHA;
 
