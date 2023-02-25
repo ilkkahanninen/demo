@@ -122,7 +122,15 @@ export const sampleAndHold = <T>(
   seg: BoundSegment<T>
 ): BoundSegment<T> => {
   return {
-    get: (time) => seg.get(Math.floor(time * sampleLength) / sampleLength),
+    get: (time) => seg.get(Math.floor(time / sampleLength) * sampleLength),
     duration: seg.duration,
   };
 };
+
+export const offset = <T>(
+  timeOffset: number,
+  seg: BoundSegment<T>
+): BoundSegment<T> => ({
+  get: (time) => seg.get(time + timeOffset),
+  duration: seg.duration,
+});

@@ -35,6 +35,7 @@ uniform float ENV_GEOMETRY;
 uniform float ENV_FACTOR;
 uniform float NUMBER_OF_LIGHTS;
 uniform float RENDER_BALLS;
+uniform float LIGHT_INTENSITY;
 
 const int OUT_OF_VIEW = -1;
 const int SPHERE = 0;
@@ -66,7 +67,9 @@ vec3 lightPosition(int index) {
 }
 
 vec3 lightColor(int index) {
-  return index == 0 ? vec3(300.0, 1.5, 0.5) : vec3(20.0, 19.0, 18.0);
+  vec3 col = index == 0 ? vec3(300.0, 1.5, 0.5) : vec3(20.0, 19.0, 18.0);
+  col *= LIGHT_INTENSITY;
+  return col;
 }
 
 result lightOrb(vec3 p, int index) {

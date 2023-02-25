@@ -8,6 +8,8 @@ import {
   join,
   labels,
   linear,
+  offset,
+  repeat,
   sampleAndHold,
   sin,
   vector,
@@ -33,6 +35,17 @@ const zero = hold(0);
 const nope = zero;
 const jeba = hold(1);
 
+// Materials
+
+const beatenUpMetal = hold(0);
+const rustingLinedMetal = hold(1);
+const stainlessSteel = hold(2);
+
+// Shaders
+
+const palloShader = hold(0);
+const jokuMuotoShader = hold(1);
+
 // Overlays
 
 const noTexture = -1;
@@ -43,11 +56,14 @@ const phongTex = 3;
 const gourandTex = 4;
 const gridTex = 5;
 const svgaTex = 6;
+const stereoTex = 7;
+const triangleTex = 8;
+const creditsTex = 9;
 
 const overlayFx = (duration: number) =>
   join(
     linear(1.0, 0.015)(duration * 0.25),
-    hold(0.015)(duration * 0.5),
+    hold(0.025)(duration * 0.5),
     linear(0.015, 1.0)(duration * 0.25)
   );
 
@@ -79,6 +95,9 @@ const partShadows = (length: number) =>
     envFactor: linear(0, 0.001)(length),
     lightCount: hold(4)(length),
     renderBalls: nope(length),
+    material: beatenUpMetal(length),
+    shader: palloShader(length),
+    lightIntensity: join(linear(0, 1)(length / 2), hold(1)(length / 2)),
   });
 
 // Part: First tunnel
@@ -107,6 +126,9 @@ const partTunnel = (length: number) =>
     envFactor: zero(length),
     lightCount: join(hold(2)(length / 2), hold(3)(length / 2)),
     renderBalls: jeba(length),
+    material: join(rustingLinedMetal(length / 2), beatenUpMetal(length / 2)),
+    shader: palloShader(length),
+    lightIntensity: offset(beat, repeat(32, linear(2, 0.1)(length / 32))),
   });
 
 // Part: glitch 1
@@ -131,6 +153,9 @@ const partGlitch = (length: number) =>
     envFactor: zero(length),
     lightCount: join(hold(2)(length / 2), hold(3)(length / 2)),
     renderBalls: jeba(length),
+    material: beatenUpMetal(length),
+    shader: palloShader(length),
+    lightIntensity: hold(1)(length),
   });
 
 // Part glitch 2
@@ -158,6 +183,8 @@ const glitch2Cam = (duration: number) =>
       hold(80.0)(duration / 16),
       hold(170)(duration / 16)
     ),
+    material: beatenUpMetal(length),
+    shader: palloShader(length),
   });
 
 const partGlitch2 = (length: number) =>
@@ -168,25 +195,40 @@ const partGlitch2 = (length: number) =>
     envFactor: zero(length),
     lightCount: hold(8)(length),
     renderBalls: jeba(length),
+    material: beatenUpMetal(length),
+    shader: palloShader(length),
+    lightIntensity: hold(1)(length),
   });
 
 // Part: Second tunnel
 
 const tunnel2Cam = (duration: number) =>
   labels({
-    pos: sampleAndHold(
+    pos: offset(
       beat,
-      vector(hold(0), hold(-1.5), sin(6, 0.08))(duration)
+      sampleAndHold(
+        beat * 2,
+        join(
+          vector(hold(0), hold(-1.5), sin(6, 99.08))(duration / 2),
+          vector(hold(0), hold(0), add(4)(sin(2, 72.08)))(duration / 2)
+        )
+      )
     ),
     lookAt: vector(hold(0), hold(0), hold(1))(duration),
-    up: vector(sin(1, 0.1), hold(0), cos(1, 0.1))(duration),
+    up: join(
+      vector(sin(1, 0.1), hold(0), cos(1, 0.1))(duration / 2),
+      sampleAndHold(
+        beat,
+        vector(sin(1, 67), cos(1, 67), sin(1, 99))(duration / 2)
+      )
+    ),
     fov: add(80)(sin(10.0, 0.17))(duration),
   });
 
 const partTunnel2 = (length: number) =>
   labels({
     camera: tunnel2Cam(length),
-    overlay: overlay(noTexture, length),
+    overlay: join(overlay(svgaTex, length / 2), overlay(stereoTex, length / 2)),
     envGeometry: hommeli(length),
     envFactor: join(
       sin(0.1, 0.1)((length * 7) / 16),
@@ -196,12 +238,129 @@ const partTunnel2 = (length: number) =>
     ),
     lightCount: join(hold(2)(length / 2), hold(3)(length / 2)),
     renderBalls: jeba(length),
+    material: rustingLinedMetal(length),
+    shader: palloShader(length),
+    lightIntensity: repeat(128, linear(3, 0)(length / 128)),
+  });
+
+// Part: joku muoto
+
+const jokuMuotoCam = (duration: number) =>
+  labels({
+    pos: vector(sin(3, 0.072), cos(3, 0.08), sin(3, 0.08))(duration),
+    lookAt: vector(hold(0), hold(0), hold(0))(duration),
+    up: vector(sin(1, 0.1), hold(0), cos(1, 0.1))(duration),
+    fov: add(50)(sin(10.0, 0.17))(duration),
+  });
+
+const partJokuMuoto = (length: number) =>
+  labels({
+    camera: jokuMuotoCam(length),
+    overlay: join(
+      overlay(noTexture, length / 2),
+      overlay(triangleTex, length / 2)
+    ),
+    envGeometry: hommeli(length),
+    envFactor: hold(0)(length),
+    lightCount: hold(2)(length),
+    renderBalls: linear(0, 1)(length),
+    material: stainlessSteel(length),
+    shader: jokuMuotoShader(length),
+    lightIntensity: offset(2 * beat, repeat(16, linear(1, 0)(length / 16))),
+  });
+
+// Part: joku muoto cont.
+
+const jokuMuoto2Cam = (duration: number) =>
+  labels({
+    pos: sampleAndHold(
+      beat * 2,
+      vector(sin(3, 10.072), cos(3, 14.08), sin(3, 89.08))(duration)
+    ),
+    lookAt: vector(
+      sin(0.1, 1.072),
+      cos(0.1, 1.108),
+      sin(0.1, -0.408)
+    )(duration),
+    up: vector(sin(3, 0.072), cos(3, -0.08), sin(3, -0.08))(duration),
+    fov: sampleAndHold(beat * 4, add(90)(sin(40.0, 99.17))(duration)),
+  });
+
+const partJokuMuoto2 = (length: number) =>
+  labels({
+    camera: jokuMuoto2Cam(length),
+    overlay: labels({
+      texture: join(hold(triangleTex)(length / 8), hold(noTexture)(length / 4)),
+      fx: linear(1.0, 2.0)(length / 8),
+    }),
+    envGeometry: hommeli(length),
+    envFactor: join(linear(0, 1)(length / 2), linear(1, 3)(length / 2)),
+    lightCount: hold(3)(length),
+    renderBalls: linear(0, 1)(length),
+    material: stainlessSteel(length),
+    shader: jokuMuotoShader(length),
+    lightIntensity: repeat(64, linear(2, 0)(length / 64)),
+  });
+
+// Part: outro
+
+const outroCam = (duration: number) =>
+  labels({
+    pos: vector(cos(2, 0.01), sin(2, 0.01), hold(0))(duration),
+    lookAt: vector(
+      sin(0.02, 0.1072),
+      cos(0.02, 0.1108),
+      sin(0.02, -0.1408)
+    )(duration),
+    up: vector(sin(1, 0.0072), cos(1, -0.008), sin(1, -0.008))(duration),
+    fov: linear(100, 170)(duration),
+  });
+
+const partOutro = (length: number) =>
+  labels({
+    camera: outroCam(length),
+    overlay: join(
+      overlay(noTexture, length / 2),
+      overlay(creditsTex, length / 2)
+    ),
+    envGeometry: hommeli(length),
+    envFactor: hold(3)(length),
+    lightCount: join(
+      hold(3)(length / 4),
+      hold(2)(length / 4),
+      hold(1)(length / 2)
+    ),
+    renderBalls: hold(0)(length),
+    material: stainlessSteel(length),
+    shader: jokuMuotoShader(length),
+    lightIntensity: join(
+      repeat(4, join(linear(0, 1)(length / 16), linear(1, 0)(length / 16))),
+      linear(0, 1)(length / 16),
+      linear(1, 0)(length / 16),
+      linear(0, 0.5)(length / 16),
+      linear(0.5, 0)(length / 16),
+      linear(0, 0.25)(length / 16),
+      linear(0.25, 0)(length / 16),
+      linear(0, 0.125)(length / 16),
+      linear(0.125, 0)(length / 16),
+      linear(0, 0.06)(length / 16),
+      linear(0.06, 0)(length / 16),
+      linear(0, 0.03)(length / 16),
+      linear(0.03, 0)(length / 16),
+      linear(0, 0.02)(length / 16),
+      linear(0.02, 0)(length / 16),
+      linear(0, 0.01)(length / 16),
+      linear(0.01, 0)(length / 16)
+    ),
   });
 
 export const script = join(
-  partTunnel2(bars(16)),
   partShadows(bars(16)),
   partTunnel(bars(16)),
   partGlitch(bars(4)),
-  partGlitch2(bars(16))
+  partGlitch2(bars(16)),
+  partTunnel2(bars(16)),
+  partJokuMuoto(bars(16)),
+  partJokuMuoto2(bars(16)),
+  partOutro(bars(32))
 );

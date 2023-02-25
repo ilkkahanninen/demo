@@ -17,6 +17,7 @@ import bloomCopySrc from "./scene/bloomCopy.frag";
 import blurXSrc from "./scene/blurX.frag";
 import blurYSrc from "./scene/blurY.frag";
 import defaultVertexSrc from "./scene/default.vert";
+import jokuMuotoSrc from "./scene/jokumuoto.frag";
 import pallotTunnelissaSrc from "./scene/pallotTunnelissa.frag";
 import postprocessSrc from "./scene/postprocess.frag";
 import { script } from "./script";
@@ -64,6 +65,9 @@ const layers = [
   new URL("layers/gourand.png", import.meta.url),
   new URL("layers/grid.png", import.meta.url),
   new URL("layers/svga.png", import.meta.url),
+  new URL("layers/stereo.png", import.meta.url),
+  new URL("layers/triangle.png", import.meta.url),
+  new URL("layers/credits.png", import.meta.url),
 ].map((url) => new Texture(gl, url));
 
 const materials = [
@@ -79,9 +83,9 @@ waitFor(music, ...materials, ...layers).then(() => {
 
   const balls = new ShaderProgram(gl, defaultVertexSrc, pallotTunnelissaSrc);
 
-  const [vertexPos, overlayTexturePos] = balls.vertexAttributes(
+  const [ballsVertexPos, ballsTexCoords] = balls.vertexAttributes(
     "VERTEX_POS",
-    "OVERLAY_TEXTURE_POS"
+    "TEX_COORDS"
   );
 
   balls.setupSamplers(
@@ -108,6 +112,30 @@ waitFor(music, ...materials, ...layers).then(() => {
     "AO_SAMPLER"
   );
 
+  const jokuMuoto = new ShaderProgram(gl, defaultVertexSrc, jokuMuotoSrc);
+  jokuMuoto.setupSamplers(
+    "ALBEDO_SAMPLER",
+    "METALLIC_SAMPLER",
+    "ROUGHNESS_SAMPLER",
+    "AO_SAMPLER",
+    "ENVIRONMENT_SAMPLER"
+  );
+
+  const [jokuVertexPos, jokuTexCoords] = jokuMuoto.vertexAttributes(
+    "VERTEX_POS",
+    "TEX_COORDS"
+  );
+
+  const jokuMuotoEnv = new ShaderProgram(gl, defaultVertexSrc, jokuMuotoSrc, {
+    RENDER_ENVIRONMENT_MAP: true,
+  });
+  jokuMuotoEnv.setupSamplers(
+    "ALBEDO_SAMPLER",
+    "METALLIC_SAMPLER",
+    "ROUGHNESS_SAMPLER",
+    "AO_SAMPLER"
+  );
+
   const bloomCopy = new ShaderProgram(gl, defaultVertexSrc, bloomCopySrc);
   const blur1stPass = new ShaderProgram(gl, defaultVertexSrc, blurXSrc);
   const blur2ndPass = new ShaderProgram(gl, defaultVertexSrc, blurYSrc);
@@ -120,17 +148,25 @@ waitFor(music, ...materials, ...layers).then(() => {
 
   const clock = new Clock(config.bpm, music);
 
+  const objectShaders = [balls, jokuMuoto];
+  const envShaders = [ballsEnv, jokuMuotoEnv];
+
   const renderNext = () => {
     const time = clock.seconds();
     const state = script.get(time);
-    const material = materials[0];
-
-    screen.bind(vertexPos, overlayTexturePos);
+    const material = materials[state.material];
+    const objectShader = objectShaders[state.shader];
+    const envShader = envShaders[state.shader];
+    if (state.shader < 1.0) {
+      screen.bind(ballsVertexPos, ballsTexCoords);
+    } else {
+      screen.bind(jokuVertexPos, jokuTexCoords);
+    }
 
     // Rendataan ympäristö kuutioon
-    environmentMap.renderToItself(ballsEnv, (direction, up) => {
+    environmentMap.renderToItself(envShader, (direction, up) => {
       material.bindAt(gl.TEXTURE0);
-      ballsEnv.set({
+      envShader.set({
         TIME: time,
         CAMERA_POS: vec3(0.0, 0.0, 0.0),
         CAMERA_LOOKAT: direction,
@@ -139,16 +175,17 @@ waitFor(music, ...materials, ...layers).then(() => {
         ENV_GEOMETRY: state.envGeometry,
         ENV_FACTOR: state.envFactor,
         NUMBER_OF_LIGHTS: state.lightCount,
+        LIGHT_INTENSITY: state.lightIntensity,
       });
       screen.render();
     });
 
     // Päärendaushomma
-    framebuffer.renderToItself(balls, () => {
+    framebuffer.renderToItself(objectShader, () => {
       material.bindAt(gl.TEXTURE0);
       environmentMap.bindAt(gl.TEXTURE4);
 
-      balls.set({
+      objectShader.set({
         TIME: time,
         CAMERA_POS: state.camera.pos,
         CAMERA_LOOKAT: state.camera.lookAt,
@@ -158,6 +195,7 @@ waitFor(music, ...materials, ...layers).then(() => {
         ENV_FACTOR: state.envFactor,
         NUMBER_OF_LIGHTS: state.lightCount,
         RENDER_BALLS: state.renderBalls,
+        LIGHT_INTENSITY: state.lightIntensity,
       });
 
       screen.render();

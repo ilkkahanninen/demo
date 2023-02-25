@@ -15,7 +15,7 @@ const float NOISE_STRENGTH = 0.08;
 uniform float LAYER_FX;
 uniform float LAYER_ALPHA;
 
-in vec2 OVERLAY_TEXTURE_COORD;
+in vec2 TEX_COORD;
 out vec4 FRAG_COLOR;
 
 const float GAMMA = 1.2;
@@ -34,8 +34,8 @@ vec3 textLayer(vec4 noise) {
         return vec3(0.0);
     }
 
-    float pixelSize = 40.0 * clamp((0.5 + sin(TIME * 1230.0)) - ((2.5 - 2.5 * LAYER_FX)) + OVERLAY_TEXTURE_COORD.y - noise.r * 0.01, 0.0, 1.0);
-    vec2 coord = OVERLAY_TEXTURE_COORD;
+    float pixelSize = 40.0 * clamp((0.5 + sin(TIME * 1230.0)) - ((2.5 - 2.5 * LAYER_FX)) + TEX_COORD.y - noise.r * 0.01, 0.0, 1.0);
+    vec2 coord = TEX_COORD;
     if (pixelSize > 1.0) {
         coord *= RESOLUTION;
         coord.x = floor(coord.x / pixelSize) * pixelSize;
@@ -49,7 +49,7 @@ vec3 textLayer(vec4 noise) {
         float b = 0.5 + sin(round(TIME * 33.0));
         float layerY1 = min(a, b);
         float layerY2 = max(a, b);
-        if (OVERLAY_TEXTURE_COORD.y > layerY1 && OVERLAY_TEXTURE_COORD.y < layerY2) {
+        if (TEX_COORD.y > layerY1 && TEX_COORD.y < layerY2) {
             layerColor = vec3(1.0, 1.0, 1.0);
         } else {
             layerColor = vec3(noise.r, 0.0, 0.0);
@@ -61,13 +61,13 @@ vec3 textLayer(vec4 noise) {
 }
 
 void main() {
-    vec3 hdrColor = texture(FRAME, OVERLAY_TEXTURE_COORD).rgb;
-    vec4 noise = texture(NOISE, OVERLAY_TEXTURE_COORD + NOISE_POS);
+    vec3 hdrColor = texture(FRAME, TEX_COORD).rgb;
+    vec4 noise = texture(NOISE, TEX_COORD + NOISE_POS);
     vec3 layer = textLayer(noise);
 
     vec3 color = pow(hdrColor / (hdrColor + vec3(1.0)), vec3(1.0 / GAMMA)) + layer;
 
-    vec3 bloom = texture(BLOOM, OVERLAY_TEXTURE_COORD).rgb;
+    vec3 bloom = texture(BLOOM, TEX_COORD).rgb;
 
     color.r = mix(color.r, sqrt(color.r), 0.4);
     color.b = mix(color.b, color.b * color.b, 0.3);

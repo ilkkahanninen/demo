@@ -5,7 +5,7 @@ precision highp float;
 
 uniform sampler2D FRAME;
 
-in vec2 OVERLAY_TEXTURE_COORD;
+in vec2 TEX_COORD;
 in vec2 RESOLUTION;
 
 out vec4 FRAG_COLOR;
@@ -23,7 +23,7 @@ float gau(float x) {
 void main() {
     vec4 sum = vec4(0.0);
     for (float i = -rad; i <= rad; i++) {
-        sum += gau(i) * texture(FRAME, OVERLAY_TEXTURE_COORD + vec2(0., i * LOD) / RESOLUTION.xy);
+        sum += gau(i) * texture(FRAME, TEX_COORD + vec2(0., i * LOD) / RESOLUTION.xy);
     }
 
     FRAG_COLOR = vec4(sum.rgb / sum.a, 1.);

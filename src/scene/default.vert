@@ -2,9 +2,9 @@
 
 in vec4 VERTEX_POS;
 in vec2 BUFFER_RESOLUTION;
-in vec2 OVERLAY_TEXTURE_POS;
+in vec2 TEX_COORDS;
 
-out vec2 OVERLAY_TEXTURE_COORD;
+out vec2 TEX_COORD;
 out vec2 RESOLUTION;
 out mat4 VIEW_MATRIX;
 
@@ -21,7 +21,7 @@ mat4 viewMatrix(vec3 eye, vec3 center, vec3 up) {
 
 void main() {
     gl_Position = VERTEX_POS;
-    OVERLAY_TEXTURE_COORD = OVERLAY_TEXTURE_POS;
+    TEX_COORD = TEX_COORDS;
     RESOLUTION = BUFFER_RESOLUTION;
     VIEW_MATRIX = viewMatrix(CAMERA_POS, CAMERA_LOOKAT, CAMERA_UP);
 }
