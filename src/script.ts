@@ -59,12 +59,15 @@ const svgaTex = 6;
 const stereoTex = 7;
 const triangleTex = 8;
 const creditsTex = 9;
+const part1Tex = 10;
+const part2Tex = 11;
+const titleTex = 12;
 
 const overlayFx = (duration: number) =>
   join(
-    linear(1.0, 0.015)(duration * 0.25),
-    hold(0.025)(duration * 0.5),
-    linear(0.015, 1.0)(duration * 0.25)
+    linear(1.0, 0.015)(duration * 0.125),
+    hold(0.025)(duration * 0.75),
+    linear(0.015, 1.0)(duration * 0.125)
   );
 
 const overlay = (index: number, length: number) =>
@@ -123,9 +126,9 @@ const partTunnel = (length: number) =>
     camera: tunnelCam(length),
     overlay: join(
       overlay(noTexture, length / 4),
-      overlay(phongTex, length / 4),
+      overlay(part1Tex, length / 4),
       overlay(noTexture, length / 4),
-      overlay(gourandTex, length / 4)
+      overlay(phongTex, length / 4)
     ),
     envGeometry: tunnel(length),
     envFactor: zero(length),
@@ -240,7 +243,11 @@ const tunnel2Cam = (duration: number) =>
 const partTunnel2 = (length: number) =>
   labels({
     camera: tunnel2Cam(length),
-    overlay: join(overlay(svgaTex, length / 2), overlay(stereoTex, length / 2)),
+    overlay: join(
+      overlay(gourandTex, length / 2),
+      overlay(svgaTex, length / 4),
+      overlay(stereoTex, length / 4)
+    ),
     envGeometry: hommeli(length),
     envFactor: join(
       sin(0.1, 0.1)((length * 7) / 16),
@@ -308,7 +315,10 @@ const partJokuMuoto2 = (length: number) =>
   labels({
     camera: jokuMuoto2Cam(length),
     overlay: labels({
-      texture: join(hold(triangleTex)(length / 8), hold(noTexture)(length / 4)),
+      texture: join(
+        hold(triangleTex)(length / 8),
+        hold(noTexture)((length * 3) / 4)
+      ),
       fx: linear(1.0, 2.0)(length / 8),
     }),
     envGeometry: hommeli(length),
@@ -343,9 +353,11 @@ const partOutro = (length: number) =>
   labels({
     camera: outroCam(length),
     overlay: join(
+      overlay(noTexture, length / 8),
+      overlay(part2Tex, length / 8),
       overlay(noTexture, length / 4),
-      overlay(creditsTex, length / 4),
-      overlay(noTexture, length / 2)
+      overlay(titleTex, length / 2),
+      overlay(noTexture, 0)
     ),
     envGeometry: hommeli(length),
     envFactor: hold(3)(length),

@@ -68,6 +68,9 @@ const layers = [
   new URL("layers/stereo.png", import.meta.url),
   new URL("layers/triangle.png", import.meta.url),
   new URL("layers/credits.png", import.meta.url),
+  new URL("layers/part1.png", import.meta.url),
+  new URL("layers/part2.png", import.meta.url),
+  new URL("layers/title.png", import.meta.url),
 ].map((url) => new Texture(gl, url));
 
 const materials = [
