@@ -41,6 +41,7 @@ const int OUT_OF_VIEW = -1;
 const int OBJ = 0;
 const int LIGHT = 1;
 const int ENVCUBE = 2;
+const int CUT = 3;
 
 struct result {
   float dist;
@@ -59,7 +60,7 @@ result opDiff(result a, result b) {
   if (a.dist > -b.dist) {
     return a;
   }
-  return result(-b.dist, b.p, b.kind);
+  return result(-b.dist, a.p, a.kind);
 }
 
 // Valojen sijainnit ja värit - TODO: nämäkin voisi siirtää täältä pois ja laskea vain kerran
@@ -103,6 +104,10 @@ result sphere(vec3 samplePoint) {
   return result(length(samplePoint) - 1.0, samplePoint, OBJ);
 }
 
+result cutSphere(vec3 samplePoint) {
+  return result(length(samplePoint) - 1.0, samplePoint, CUT);
+}
+
 float smMin(float a, float b, float k) {
   float i_h = max(k - abs(a - b), 0.0);
   return min(a, b) - i_h * i_h * 0.25 / k;
@@ -143,17 +148,27 @@ result render(vec3 p) {
   }
 
   result env = lightOrbs(p);
-
   env = opUnion(envCube(p), env);
+
+  #ifdef RENDER_ENVIRONMENT_MAP
+  return env;
+  #endif
 
   result cut = sphere(q + vec3(0.5));
   cut = opUnion(cut, sphere(q - vec3(0.5)));
 
   result foo = opDiff(cube(q), cut);
+
+  // if (length(p) < 5.0) {
+  vec3 c = vec3(0.0);
+  vec3 r = mod(q * 5.0 + 0.5 * c, c) - 0.5 * c;
+  foo = opUnion(foo, cutSphere(r));
+  // }
+
   foo = opUnion(foo, sphere(q * 1.5 + vec3(0.6)));
   foo = opUnion(foo, sphere(q * 1.5 - vec3(0.6)));
 
-  foo.dist -= 0.05;
+  foo.dist -= 0.05 + 0.001 * sin(20. * q.x) * sin(20. * q.y) * sin(20. * q.z);
 
   return opUnion(foo, env);
 }
@@ -318,14 +333,24 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
   }
 
   if (r.kind == ENVCUBE) {
-    vec2 uv = sphereUvMap(normalize(r.p));
+    vec2 uv = vec2(TIME, TIME);
+    vec2 uv2 = sphereUvMap(normalize(r.p));
 
     vec3 albedo = texture(ALBEDO_SAMPLER, uv).rgb;
     float metallic = texture(METALLIC_SAMPLER, uv).r;
     float roughness = texture(ROUGHNESS_SAMPLER, uv).r;
     float ambientOcclusion = texture(AO_SAMPLER, uv).r;
 
-    return pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion, 0.5, CUBE_SHADOWS);
+    vec3 line = vec3(0.);
+    if (mod(uv2.x, 0.05) < 0.001) {
+      line = LIGHT_INTENSITY * vec3(5.0 + 5.0 * sin(uv2.x * 2. * PI + TIME * 3.0));
+    }
+
+    return line + 0.2 * pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion, 0.5, CUBE_SHADOWS);
+  }
+
+  if (r.kind == CUT) {
+    return vec3(1.);
   }
 
   return vec3(0.0);

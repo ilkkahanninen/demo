@@ -301,7 +301,7 @@ const jokuMuoto2Cam = (duration: number) =>
       sin(0.02, -0.408)
     )(duration),
     up: vector(sin(3, 0.072), cos(3, -0.08), sin(3, -0.08))(duration),
-    fov: sampleAndHold(beat * 4, add(90)(sin(40.0, 99.17))(duration)),
+    fov: sampleAndHold(beat * 4, add(60)(sin(35.0, 99.17))(duration)),
   });
 
 const partJokuMuoto2 = (length: number) =>
@@ -336,15 +336,16 @@ const outroCam = (duration: number) =>
       sin(0.02, -0.1408)
     )(duration),
     up: vector(sin(1, 0.0072), cos(1, -0.008), sin(1, -0.008))(duration),
-    fov: linear(100, 170)(duration),
+    fov: linear(100, 180)(duration),
   });
 
 const partOutro = (length: number) =>
   labels({
     camera: outroCam(length),
     overlay: join(
-      overlay(noTexture, length / 2),
-      overlay(creditsTex, length / 2)
+      overlay(noTexture, length / 4),
+      overlay(creditsTex, length / 4),
+      overlay(noTexture, length / 2)
     ),
     envGeometry: hommeli(length),
     envFactor: hold(3)(length),
@@ -370,11 +371,7 @@ const partOutro = (length: number) =>
       linear(0, 0.06)(length / 16),
       linear(0.06, 0)(length / 16),
       linear(0, 0.03)(length / 16),
-      linear(0.03, 0)(length / 16),
-      linear(0, 0.02)(length / 16),
-      linear(0.02, 0)(length / 16),
-      linear(0, 0.01)(length / 16),
-      linear(0.01, 0)(length / 16)
+      linear(0.03, 0)(length / 16)
     ),
     noise: join(
       linear(0.5, 0.08)(length / 4),
