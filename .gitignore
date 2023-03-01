@@ -4,3 +4,6 @@ dist/
 .DS_Store
 src/.DS_Store
 src/.DS_Store
+package.json
+capture/
+capture.mp4

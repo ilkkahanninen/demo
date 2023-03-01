@@ -243,7 +243,6 @@ waitFor(music, ...materials, ...layers).then(() => {
   };
 
   window.onclick = () => {
-    // audio.play();
     clock.reset();
     requestAnimationFrame(renderNext);
     window.onclick = null;

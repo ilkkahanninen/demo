@@ -5,11 +5,14 @@ export class Clock {
   startTime = 0;
   pauseTime: number | null = null;
   pendingRender: (() => void) | null = null;
-  music: Music;
+  music: HTMLAudioElement | null;
+  capture: boolean;
+  captureFrame: number = 0;
 
   constructor(beatsPerMinute: number, music: Music) {
     this.bpm = beatsPerMinute;
-    this.music = music;
+    this.capture = window.location.search.includes("capture");
+    this.music = !this.capture && music.audio ? music.audio : null;
 
     window.addEventListener("keydown", (event) => {
       // console.log("down", event.code);
@@ -27,17 +30,16 @@ export class Clock {
   reset(): void {
     this.pauseTime = null;
     this.startTime = new Date().getTime();
-    console.log(this.music.audio);
-    if (this.music.audio) {
-      this.music.audio.currentTime = 0;
-      this.music.audio.play();
+    if (this.music) {
+      this.music.currentTime = 0;
+      this.music.play();
     }
   }
 
   pause(): void {
     if (!this.pauseTime) {
       this.pauseTime = new Date().getTime();
-      this.music.audio?.pause();
+      this.music?.pause();
     }
   }
 
@@ -45,26 +47,29 @@ export class Clock {
     if (this.pauseTime) {
       this.startTime += new Date().getTime() - this.pauseTime;
       this.pauseTime = null;
-      this.pendingRender && this.requestNextFrame(this.pendingRender);
-      this.music.audio?.play();
+      this.pendingRender && requestAnimationFrame(this.pendingRender);
+      this.music?.play();
     }
   }
 
   forward(milliseconds: number) {
     this.startTime -= milliseconds;
-    if (this.music.audio) {
-      this.music.audio.currentTime = this.seconds();
+    if (this.music) {
+      this.music.currentTime = this.seconds();
     }
   }
 
   rewind(milliseconds: number) {
     this.startTime += milliseconds;
-    if (this.music.audio) {
-      this.music.audio.currentTime = this.seconds();
+    if (this.music) {
+      this.music.currentTime = this.seconds();
     }
   }
 
   seconds(): number {
+    if (this.capture) {
+      return this.captureFrame / 60;
+    }
     return ((this.pauseTime || new Date().getTime()) - this.startTime) * 0.001;
   }
 
@@ -73,7 +78,12 @@ export class Clock {
   }
 
   async requestNextFrame(render: () => void) {
-    if (this.pauseTime) {
+    if (this.capture) {
+      document.title = this.captureFrame.toString();
+      this.pendingRender = render;
+      this.pause();
+      this.captureFrame++;
+    } else if (this.pauseTime) {
       this.pendingRender = render;
     } else {
       requestAnimationFrame(render);
