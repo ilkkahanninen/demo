@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "parcel src/index.html --no-cache",
     "clean": "rm -rf .parcel-cache && rm -rf dist",
-    "build": "./build.sh",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "parcel build src/index.html --no-cache --no-source-maps --dist-dir dist",
     "serve": "npx http-serve dist",
     "capture": "node ./capture.js",
     "convert": "ffmpeg -framerate 60 -pattern_type glob -i './capture/*.png' -i './src/j9-alberga-calculus.mp3' -shortest -c:v libx264 -pix_fmt yuv420p -crf 21 capture.mp4"
@@ -18,7 +17,6 @@
     "@types/node": "^17.0.25",
     "parcel": "^2.4.1",
     "puppeteer": "^19.7.2",
-    "roadroller": "^2.1.0",
     "typescript": "^4.6.3"
   }
 }

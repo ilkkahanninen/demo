@@ -1,6 +1,6 @@
 import { Clock } from "./Clock";
 import { Rectangle } from "./Rectangle";
-import { waitFor } from "./Resource";
+import { loadResources } from "./Resource";
 import { ShaderProgram } from "./ShaderProgram";
 import { vec2, vec3 } from "./vectors";
 
@@ -22,12 +22,6 @@ import pallotTunnelissaSrc from "./scene/pallotTunnelissa.frag";
 import postprocessSrc from "./scene/postprocess.frag";
 import { script } from "./script";
 import { Texture } from "./Texture";
-
-document.body.style.background = "#000";
-document.body.style.margin = "0";
-document.body.style.display = "flex";
-document.body.style.alignItems = "center";
-document.body.style.height = "100vh";
 
 const canvas = document.querySelector<HTMLCanvasElement>("canvas")!;
 canvas.style.width = "100%";
@@ -81,7 +75,7 @@ const materials = [
 
 const music = new Music(new URL("j9-alberga-calculus.mp3", import.meta.url));
 
-waitFor(music, ...materials, ...layers).then(() => {
+loadResources(music, ...materials, ...layers).then(() => {
   const screen = new Rectangle(gl);
 
   const balls = new ShaderProgram(gl, defaultVertexSrc, pallotTunnelissaSrc);
@@ -243,6 +237,8 @@ waitFor(music, ...materials, ...layers).then(() => {
   };
 
   window.onclick = () => {
+    document.querySelector(".progressbar")?.remove();
+    document.body.className = "running";
     clock.reset();
     requestAnimationFrame(renderNext);
     window.onclick = null;
