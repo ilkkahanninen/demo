@@ -1,53 +1,57 @@
-export function initBuffer(gl: WebGLRenderingContext): WebGLBuffer {
-  const positionBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+export type Defines = Record<string, string | number | boolean | null>;
 
-  const positions = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
-
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-
-  return positionBuffer!;
-}
-
-export function initShader(
-  gl: WebGLRenderingContext,
-  vsSource: string,
-  fsSource: string
-): WebGLProgram {
-  const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource)!;
-  const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource)!;
-
-  const shaderProgram = gl.createProgram()!;
-  gl.attachShader(shaderProgram, vertexShader);
-  gl.attachShader(shaderProgram, fragmentShader);
-  gl.linkProgram(shaderProgram);
-
-  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    throw (
-      "Unable to initialize the shader program: " +
-      gl.getProgramInfoLog(shaderProgram)
-    );
-  }
-
-  return shaderProgram;
-}
-
-export function loadShader(
+export let loadShader = (
   gl: WebGLRenderingContext,
   type: GLenum,
-  source: string
-): WebGLShader {
+  source: string,
+  defines: Defines = {}
+): WebGLShader => {
+  const definedSource = setDefines(source, defines);
   const shader = gl.createShader(type)!;
-  gl.shaderSource(shader, source);
+  gl.shaderSource(shader, definedSource);
   gl.compileShader(shader);
 
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    gl.deleteShader(shader);
-    console.warn(source);
-    throw (
-      "An error occurred compiling the shaders: " + gl.getShaderInfoLog(shader)
-    );
+  if (process.env.NODE_ENV !== "production") {
+    let info = gl.getShaderInfoLog(shader);
+
+    if (info?.length) {
+      gl.deleteShader(shader);
+      info
+        .split("\n")
+        .filter((n) => n.length > 0)
+        .forEach((error) => {
+          const match = error.match(/ERROR: (\d+):(\d+): (.*)/);
+          if (match) {
+            const lineNo = parseInt(match[2], 10) - 1;
+            console.error(`GLSL error on line ${lineNo}: ${match[3]}`);
+            definedSource
+              .split("\n")
+              .map((s, i) => `${i.toString().padStart(4, " ")}: ${s}`)
+              .slice(lineNo - 3, lineNo + 3)
+              .map((line, i) => {
+                if (i == 3)
+                  console.log(`%c${line}`, "color: red; font-weight: bold");
+                else console.log(line);
+              });
+          } else {
+            console.error(error);
+          }
+        });
+      throw "An error occurred compiling the shaders";
+    }
   }
 
   return shader;
-}
+};
+
+const setDefines = (source: string, defines: Defines): string =>
+  Object.entries(defines)
+    .reduce(
+      (s, [name, value]) =>
+        s.replace(
+          `#env ${name}`,
+          `#define ${name} ${value === null ? "" : JSON.stringify(value)}`
+        ),
+      source
+    )
+    .replace(/^#env.*$/gm, "\n");
