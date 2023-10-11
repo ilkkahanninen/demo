@@ -89,10 +89,7 @@ const percPattern = <T>(seg1: SegmentCtor<T>, seg2: SegmentCtor<T>) =>
 
 const tunnelCam = (duration: number) =>
   assignSegments({
-    pos: concat(
-      vector(hold(0), linear(-10, -7), hold(0))(duration / 2),
-      vector(hold(0), linear(3, 6), hold(0))(duration / 2)
-    ),
+    pos: vector(sin(0.3, 0.1), sin(10, 0.02), cos(0.3, 0.1))(duration),
     lookAt: vector(sin(1, 0.2), cos(1, 0.21), sin(1, 0.12))(duration),
     up: vector(sin(1, 0.1), hold(0), cos(1, 0.1))(duration),
     fov: hold(60.0)(duration),

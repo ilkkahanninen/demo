@@ -41,7 +41,7 @@ uniform float SCRIPTED_TIME;
 const int OUT_OF_VIEW = -1;
 const int SPHERE = 0;
 const int TUNNEL = 1;
-const int BOX = 2;
+const int CUBE = 2;
 const int LIGHT = 3;
 const int HOMMELI = 4;
 
@@ -61,6 +61,11 @@ result opUnion(result a, result b) {
 float sdLink(vec3 p, float le, float r1, float r2) {
   vec3 q = vec3(p.x, max(abs(p.y) - le, 0.0f), p.z);
   return length(vec2(length(q.xy) - r1, q.z)) - r2;
+}
+
+float sdCube(vec3 p, vec3 b) {
+  vec3 i_q = abs(p) - b;
+  return length(max(i_q, 0.0f)) + min(max(i_q.x, max(i_q.y, i_q.z)), 0.0f);
 }
 
 // Valojen sijainnit ja värit - TODO: nämäkin voisi siirtää täältä pois ja laskea vain kerran
@@ -107,6 +112,20 @@ result smoothUnion(result a, result b, float k) {
   return result(dist, a.p, a.kind);
 }
 
+// Kuutiot
+
+float opUnion(float distA, float distB) {
+  return min(distA, distB);
+}
+
+result cubes(vec3 p) {
+  vec3 s = vec3(1.7f + 0.5f * sin(SCRIPTED_TIME));
+  vec3 q = p - s * round(p / s);
+  float w = 0.1f + 0.04f * sin(length(p));
+  float dist = sdCube(q, vec3(w, 0.8f, w));
+  return result(dist, p, SPHERE);
+}
+
 // Tunneli
 
 vec2 tunnelUvMap(vec3 p) {
@@ -141,15 +160,6 @@ vec2 hommeliUvMap(vec3 p) {
   return vec2(u + dst, p.y * 0.05f);
 }
 
-// Kuutio
-
-result cube(vec3 p) {
-  vec3 b = vec3(5.0f, 30.0f, 5.0f);
-  vec3 i_q = abs(p) - b;
-  float dist = length(max(i_q, 0.0f)) + min(max(i_q.x, max(i_q.y, i_q.z)), 0.0f);
-  return result(-dist, p, SPHERE);
-}
-
 // Skene yhdistettynä
 
 vec3 ballPos(int index) {
@@ -167,16 +177,19 @@ result render(vec3 p) {
   #ifdef RENDER_ENVIRONMENT_MAP
   return env;
   #endif
+
   if (RENDER_BALLS == 0.0f) {
     return env;
   }
 
-  vec3 p1 = p - ballPos(0);
-  vec3 p2 = p - ballPos(1);
+  // vec3 p1 = p - ballPos(0);
+  // vec3 p2 = p - ballPos(1);
 
-  result balls = smoothUnion(sphere(p1), sphere(p2), 2.5f);
+  // result balls = smoothUnion(sphere(p1), sphere(p2), 2.5f);
 
-  return opUnion(balls, env);
+  // return opUnion(balls, env);
+
+  return opUnion(cubes(p), env);
 }
 
 result shortestDistanceToSurface(vec3 eye, vec3 marchingDirection) {
@@ -371,7 +384,7 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
   }
 
   #ifndef RENDER_ENVIRONMENT_MAP
-  if (r.kind == BOX) {
+  if (r.kind == CUBE) {
     return texture(ENVIRONMENT_SAMPLER, r.p).rgb;
   }
   #endif
