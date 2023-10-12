@@ -134,6 +134,49 @@ result palkit(vec3 p) {
   return result(d, p, SPHERE);
 }
 
+// maggarat
+
+float sdCappedTorus( vec3 p, vec2 sc, float ra, float rb) {
+  p.x = abs(p.x);
+  float k = (sc.y*p.x>sc.x*p.y) ? dot(p.xy,sc) : length(p.xy);
+  return sqrt( dot(p,p) + ra*ra - 2.0*ra*k ) - rb;
+}
+
+vec3 rotateY(vec3 p, float theta) {
+  float i_c = cos(theta);
+  float i_s = sin(theta);
+  mat4 i_m = mat4(vec4(i_c, 0, i_s, 0), vec4(0, 1, 0, 0), vec4(-i_s, 0, i_c, 0), vec4(0, 0, 0, 1));
+  return (i_m * vec4(p, 1.0)).xyz;
+}
+
+vec3 rotateZ(vec3 p, float theta) {
+    float i_c = cos(theta);
+    float i_s = sin(theta);
+
+    mat4 i_m = mat4(vec4(i_c, -i_s, 0, 0), vec4(i_s, i_c, 0, 0), vec4(0, 0, 1, 0), vec4(0, 0, 0, 1));
+    return (i_m * vec4(p, 1.0)).xyz;
+}
+
+vec3 rotateX(vec3 p, float theta) {
+    float i_c = cos(theta);
+    float i_s = sin(theta);
+
+    mat4 i_m = mat4(vec4(1, 0, 0, 0), vec4(0, i_c, -i_s, 0), vec4(0, i_s, i_c, 0), vec4(0, 0, 0, 1));
+    return (i_m * vec4(p, 1.0)).xyz;
+}
+
+result maggarat(vec3 p) {
+  p = rotateX(p, PI / 2.);
+  float z = p.z;
+  p.z -= round(p.z);
+  p = rotateZ(p, z * sin(TIME * 0.45));
+
+  float an = 0.5 + 2.5 * (0.5 + 0.5 * sin(TIME*1.1+3.0));
+  vec2 c = vec2(sin(an), cos(an));
+  float d = sdCappedTorus(p, c, 0.9, 0.3 + 0.2 * sin(TIME * 0.7 + z));
+  return result(d, p, SPHERE);
+}
+
 // Tunneli
 
 vec2 tunnelUvMap(vec3 p) {
@@ -197,7 +240,9 @@ result render(vec3 p) {
 
   // return opUnion(balls, env);
 
-  return opUnion(palkit(p), env);
+  // return opUnion(palkit(p), env);
+
+  return opUnion(maggarat(p), env);
 }
 
 result shortestDistanceToSurface(vec3 eye, vec3 marchingDirection) {
@@ -424,5 +469,5 @@ void main() {
     color = calcMaterial(p, CAMERA_POS, hitInfo);
   }
 
-  FRAG_COLOR = vec4(color, 1.0f);
+  FRAG_COLOR = vec4(color, hitInfo.dist);
 }

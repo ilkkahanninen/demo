@@ -96,4 +96,7 @@ void main() {
     // vec3 rgb = vec3(dot(yuv, YUV2RGB_R), dot(yuv, YUV2RGB_G), dot(yuv, YUV2RGB_B));
 
     FRAG_COLOR = vec4(color, 1.0f);
+    float lol = texture(FRAME, TEX_COORD).a / 25.0;
+    lol *= lol;
+    FRAG_COLOR += vec4(lol, lol * 0.5, lol * 0.1, 1.0);
 }
