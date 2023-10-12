@@ -118,12 +118,20 @@ float opUnion(float distA, float distB) {
   return min(distA, distB);
 }
 
-result cubes(vec3 p) {
-  vec3 s = vec3(1.7f + 0.5f * sin(SCRIPTED_TIME));
+float sdCubes(vec3 p, float w, vec3 s) {
   vec3 q = p - s * round(p / s);
-  float w = 0.1f + 0.04f * sin(length(p));
-  float dist = sdCube(q, vec3(w, 0.8f, w));
-  return result(dist, p, SPHERE);
+  return sdCube(q, vec3(w, 0.8f, w));
+}
+
+float opDiff(float distA, float distB) {
+    return max(distA, -distB);
+}
+
+result palkit(vec3 p) {
+  float a = sdCubes(p, 0.1f + 0.04f * sin(length(p)), vec3(1.7f + 0.5f * sin(SCRIPTED_TIME)));
+  float b = sdCubes(p, 0.05f, vec3(0.6f + 0.5f * sin(SCRIPTED_TIME * 2.7)));
+  float d= opDiff(a, b);
+  return result(d, p, SPHERE);
 }
 
 // Tunneli
@@ -189,7 +197,7 @@ result render(vec3 p) {
 
   // return opUnion(balls, env);
 
-  return opUnion(cubes(p), env);
+  return opUnion(palkit(p), env);
 }
 
 result shortestDistanceToSurface(vec3 eye, vec3 marchingDirection) {
