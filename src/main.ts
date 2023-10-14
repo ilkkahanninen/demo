@@ -127,7 +127,7 @@ loadResources(music, ...materials, ...layers).then(() => {
         ENV_FACTOR: state.envFactor,
         NUMBER_OF_LIGHTS: state.lightCount,
         LIGHT_INTENSITY: state.lightIntensity,
-        SCRIPTED_TIME: state.scriptedTime,
+        TIME_MOD: state.timeModifier,
       });
       screen.render();
     });
@@ -145,10 +145,10 @@ loadResources(music, ...materials, ...layers).then(() => {
         CAMERA_FOV: state.camera.fov,
         ENV_GEOMETRY: state.envGeometry,
         ENV_FACTOR: state.envFactor,
+        OBJECT: state.object,
         NUMBER_OF_LIGHTS: state.lightCount,
-        RENDER_BALLS: state.renderBalls,
         LIGHT_INTENSITY: state.lightIntensity,
-        SCRIPTED_TIME: state.scriptedTime,
+        TIME_MOD: state.timeModifier,
       });
 
       screen.render();
@@ -185,6 +185,7 @@ loadResources(music, ...materials, ...layers).then(() => {
         LAYER_FX: state.overlay.fx,
         LAYER_ALPHA: state.overlay.texture >= 0 ? 1 : 0,
         NOISE_STRENGTH: state.noise,
+        POST_EFFECT: state.postEffect,
       });
       screen.render();
     });

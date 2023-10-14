@@ -89,15 +89,15 @@ const percPattern = <T>(seg1: SegmentCtor<T>, seg2: SegmentCtor<T>) =>
 
 const tunnelCam = (duration: number) =>
   assignSegments({
-    pos: vector(sin(0.3, 0.1), sin(3, 0.02), cos(0.3, 0.1))(duration),
+    pos: vector(sin(0.3, 0.1), sin(10, 0.002), cos(0.3, 0.1))(duration),
     lookAt: vector(sin(1, 0.2), cos(1, 0.21), sin(1, 0.12))(duration),
     up: vector(sin(1, 0.1), hold(0), cos(1, 0.1))(duration),
     fov: hold(60.0)(duration),
   });
 
-const partTunnel = (length: number) =>
+const partTunnel = (duration: number) =>
   assignSegments({
-    camera: tunnelCam(length),
+    camera: tunnelCam(duration),
     overlay: overlay(noTexture, 0),
     //  concat(
     //   overlay(noTexture, length / 4),
@@ -105,17 +105,26 @@ const partTunnel = (length: number) =>
     //   overlay(noTexture, length / 4),
     //   overlay(phongTex, length / 4)
     // ),
-    envGeometry: tunnel(length),
-    envFactor: zero(length),
-    lightCount: concat(hold(2)(length / 2), hold(3)(length / 2)),
-    renderBalls: enabled(length),
-    material: concat(rustingLinedMetal(length / 2), beatenUpMetal(length / 2)),
-    shader: palloShader(length),
-    lightIntensity: repeat(128, linear(10, 0.1)(length / 128)),
-    noise: repeat(1024, linear(0.5, 0)(length / 1024)),
-    scriptedTime: loop(64, (i) =>
+    envGeometry: tunnel(duration),
+    envFactor: zero(duration),
+    lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
+    object: concat(
+      hold(0)(duration / 4),
+      hold(1)(duration / 4),
+      hold(2)(duration / 4),
+      hold(3)(duration / 4)
+    ),
+    material: concat(
+      rustingLinedMetal(duration / 2),
+      beatenUpMetal(duration / 2)
+    ),
+    shader: palloShader(duration),
+    lightIntensity: repeat(128, linear(10, 0.1)(duration / 128)),
+    noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
+    timeModifier: loop(64, (i) =>
       percPattern(hold(i * 2.7), hold((i + 0.5) * 2.7))
     ),
+    postEffect: repeat(32, linear(0, 2)(duration / 32)),
   });
 
 export const script = concat(partTunnel(bars(32)));

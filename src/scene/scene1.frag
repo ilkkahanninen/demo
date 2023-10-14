@@ -34,9 +34,9 @@ uniform float CAMERA_FOV;
 uniform float ENV_GEOMETRY;
 uniform float ENV_FACTOR;
 uniform float NUMBER_OF_LIGHTS;
-uniform float RENDER_BALLS;
 uniform float LIGHT_INTENSITY;
-uniform float SCRIPTED_TIME;
+uniform float TIME_MOD;
+uniform float OBJECT;
 
 const int OUT_OF_VIEW = -1;
 const int SPHERE = 0;
@@ -124,56 +124,56 @@ float sdCubes(vec3 p, float w, vec3 s) {
 }
 
 float opDiff(float distA, float distB) {
-    return max(distA, -distB);
+  return max(distA, -distB);
 }
 
 result palkit(vec3 p) {
-  float a = sdCubes(p, 0.1f + 0.04f * sin(length(p)), vec3(1.7f + 0.5f * sin(SCRIPTED_TIME)));
-  float b = sdCubes(p, 0.05f, vec3(0.6f + 0.5f * sin(SCRIPTED_TIME * 2.7)));
-  float d= opDiff(a, b);
+  float a = sdCubes(p, 0.1f + 0.04f * sin(length(p)), vec3(1.7f + 0.5f * sin(TIME_MOD)));
+  float b = sdCubes(p, 0.05f, vec3(0.6f + 0.5f * sin(TIME_MOD * 2.7f)));
+  float d = opDiff(a, b);
   return result(d, p, SPHERE);
 }
 
 // maggarat
 
-float sdCappedTorus( vec3 p, vec2 sc, float ra, float rb) {
+float sdCappedTorus(vec3 p, vec2 sc, float ra, float rb) {
   p.x = abs(p.x);
-  float k = (sc.y*p.x>sc.x*p.y) ? dot(p.xy,sc) : length(p.xy);
-  return sqrt( dot(p,p) + ra*ra - 2.0*ra*k ) - rb;
+  float k = (sc.y * p.x > sc.x * p.y) ? dot(p.xy, sc) : length(p.xy);
+  return sqrt(dot(p, p) + ra * ra - 2.0f * ra * k) - rb;
 }
 
 vec3 rotateY(vec3 p, float theta) {
   float i_c = cos(theta);
   float i_s = sin(theta);
   mat4 i_m = mat4(vec4(i_c, 0, i_s, 0), vec4(0, 1, 0, 0), vec4(-i_s, 0, i_c, 0), vec4(0, 0, 0, 1));
-  return (i_m * vec4(p, 1.0)).xyz;
+  return (i_m * vec4(p, 1.0f)).xyz;
 }
 
 vec3 rotateZ(vec3 p, float theta) {
-    float i_c = cos(theta);
-    float i_s = sin(theta);
+  float i_c = cos(theta);
+  float i_s = sin(theta);
 
-    mat4 i_m = mat4(vec4(i_c, -i_s, 0, 0), vec4(i_s, i_c, 0, 0), vec4(0, 0, 1, 0), vec4(0, 0, 0, 1));
-    return (i_m * vec4(p, 1.0)).xyz;
+  mat4 i_m = mat4(vec4(i_c, -i_s, 0, 0), vec4(i_s, i_c, 0, 0), vec4(0, 0, 1, 0), vec4(0, 0, 0, 1));
+  return (i_m * vec4(p, 1.0f)).xyz;
 }
 
 vec3 rotateX(vec3 p, float theta) {
-    float i_c = cos(theta);
-    float i_s = sin(theta);
+  float i_c = cos(theta);
+  float i_s = sin(theta);
 
-    mat4 i_m = mat4(vec4(1, 0, 0, 0), vec4(0, i_c, -i_s, 0), vec4(0, i_s, i_c, 0), vec4(0, 0, 0, 1));
-    return (i_m * vec4(p, 1.0)).xyz;
+  mat4 i_m = mat4(vec4(1, 0, 0, 0), vec4(0, i_c, -i_s, 0), vec4(0, i_s, i_c, 0), vec4(0, 0, 0, 1));
+  return (i_m * vec4(p, 1.0f)).xyz;
 }
 
 result maggarat(vec3 p) {
-  p = rotateX(p, PI / 2.);
+  p = rotateX(p, PI / 2.f);
   float z = p.z;
   p.z -= round(p.z);
-  p = rotateZ(p, z * sin(TIME * 0.45));
+  p = rotateZ(p, z * sin(TIME * 0.45f));
 
-  float an = 0.5 + 2.5 * (0.5 + 0.5 * sin(TIME*1.1+3.0));
+  float an = 0.5f + 2.5f * (0.5f + 0.5f * sin(TIME * 1.1f + 3.0f));
   vec2 c = vec2(sin(an), cos(an));
-  float d = sdCappedTorus(p, c, 0.9, 0.3 + 0.2 * sin(TIME * 0.7 + z));
+  float d = sdCappedTorus(p, c, 0.9f, 0.3f + 0.2f * sin(TIME * 0.7f + z));
   return result(d, p, SPHERE);
 }
 
@@ -214,7 +214,7 @@ vec2 hommeliUvMap(vec3 p) {
 // Skene yhdistettynä
 
 vec3 ballPos(int index) {
-  float t = TIME + SCRIPTED_TIME;
+  float t = TIME + TIME_MOD;
   vec3 v = vec3(sin(t * 0.6f), cos(t * 0.5f), sin(t * 0.45f));
   return index == 0 ? v : -v;
 }
@@ -229,19 +229,18 @@ result render(vec3 p) {
   return env;
   #endif
 
-  if (RENDER_BALLS == 0.0f) {
+  if (OBJECT == 0.0f) {
     return env;
+  } else if (OBJECT == 1.0f) {
+    vec3 p1 = p - ballPos(0);
+    vec3 p2 = p - ballPos(1);
+
+    result balls = smoothUnion(sphere(p1), sphere(p2), 2.5f);
+
+    return opUnion(balls, env);
+  } else if (OBJECT == 2.0f) {
+    return opUnion(palkit(p), env);
   }
-
-  // vec3 p1 = p - ballPos(0);
-  // vec3 p2 = p - ballPos(1);
-
-  // result balls = smoothUnion(sphere(p1), sphere(p2), 2.5f);
-
-  // return opUnion(balls, env);
-
-  // return opUnion(palkit(p), env);
-
   return opUnion(maggarat(p), env);
 }
 

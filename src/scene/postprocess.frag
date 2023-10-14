@@ -14,6 +14,7 @@ uniform float TIME;
 uniform float NOISE_STRENGTH;
 uniform float LAYER_FX;
 uniform float LAYER_ALPHA;
+uniform float POST_EFFECT;
 
 in vec2 TEX_COORD;
 out vec4 FRAG_COLOR;
@@ -63,21 +64,28 @@ vec3 textLayer(vec4 noise) {
 void main() {
     vec4 noise = texture(NOISE, TEX_COORD + NOISE_POS);
     vec3 current = texture(FRAME, TEX_COORD).rgb;
-    float hdrR = texture(FRAME, TEX_COORD + vec2(sin(current.r) * 0.1f, 0.0f)).r;
-    float hdrG = texture(FRAME, TEX_COORD - vec2(sin(current.g) * 0.1f, 0.0f)).g;
-    float hdrB = texture(FRAME, TEX_COORD + vec2(sin(current.b) * 0.1f, 0.0f)).b;
-    vec3 hdrColor = vec3((hdrR), (hdrG), (hdrB));
     vec3 layer = textLayer(noise);
-
-    vec3 color = pow(hdrColor / (hdrColor + vec3(1.0f)), vec3(1.0f / GAMMA)) + layer;
-    vec3 color2 = pow(current / (current + vec3(1.0f)), vec3(1.0f / GAMMA)) + layer;
-
+    vec3 basicColor = pow(current / (current + vec3(1.0f)), vec3(1.0f / GAMMA)) + layer;
     vec3 bloom = texture(BLOOM, TEX_COORD).rgb;
 
-    // color.r = mix(color.r, sqrt(color.r), 0.4f);
-    // color.b = mix(color.b, color.b * color.b, 0.3f);
-    color = mix(color, vec3(1.0f), 0.05f);
-    color = mix(color2, color, 0.75f); // TODO: säädettävä lsd:n määrä
+    vec3 color = basicColor;
+
+    if (POST_EFFECT < 1.0f) {
+        color = mix(basicColor, vec3(1.0f, 0.0f, 0.0f), POST_EFFECT);
+        // NOP
+    } else if (POST_EFFECT < 2.0f) {
+        float hdrR = texture(FRAME, TEX_COORD + vec2(sin(current.r) * 0.1f, 0.0f)).r;
+        float hdrG = texture(FRAME, TEX_COORD - vec2(sin(current.g) * 0.1f, 0.0f)).g;
+        float hdrB = texture(FRAME, TEX_COORD + vec2(sin(current.b) * 0.1f, 0.0f)).b;
+        vec3 hdrColor = vec3((hdrR), (hdrG), (hdrB));
+
+        color = pow(hdrColor / (hdrColor + vec3(1.0f)), vec3(1.0f / GAMMA)) + layer;
+
+        // color.r = mix(color.r, sqrt(color.r), 0.4f);
+        // color.b = mix(color.b, color.b * color.b, 0.3f);
+        color = mix(color, vec3(1.0f), 0.05f);
+        color = mix(basicColor, color, POST_EFFECT - 1.f);
+    }
 
     color += bloom;
 
@@ -96,7 +104,7 @@ void main() {
     // vec3 rgb = vec3(dot(yuv, YUV2RGB_R), dot(yuv, YUV2RGB_G), dot(yuv, YUV2RGB_B));
 
     FRAG_COLOR = vec4(color, 1.0f);
-    float lol = texture(FRAME, TEX_COORD).a / 25.0;
+    float lol = texture(FRAME, TEX_COORD).a / 25.0f;
     lol *= lol;
-    FRAG_COLOR += vec4(lol, lol * 0.5, lol * 0.1, 1.0);
+    FRAG_COLOR += vec4(lol, lol * 0.5f, lol * 0.1f, 1.0f);
 }
