@@ -1,6 +1,7 @@
 import { config } from "./config";
 import {
   SegmentCtor,
+  add,
   assignSegments,
   barCalculator,
   beatCalculator,
@@ -10,6 +11,7 @@ import {
   linear,
   loop,
   repeat,
+  sampleAndHold,
   sin,
   vector,
 } from "./scripting/index";
@@ -48,26 +50,13 @@ const jokuMuotoShader = hold(1);
 // Overlays
 
 const noTexture = -1;
-const realtimePhong = 0;
-const jumalautaTex = 1;
-const jumalautaLogosTex = 2;
-const phongTex = 3;
-const gourandTex = 4;
-const gridTex = 5;
-const svgaTex = 6;
-const stereoTex = 7;
-const triangleTex = 8;
-const creditsTex = 9;
-const part1Tex = 10;
-const part2Tex = 11;
-const titleTex = 12;
+const overlayX = 0;
+const overlayO = 1;
+const overlaySquare = 2;
+const overlayTriangle = 3;
 
 const overlayFx = (duration: number) =>
-  concat(
-    linear(1.0, 0.015)(duration * 0.125),
-    hold(0.025)(duration * 0.75),
-    linear(0.015, 1.0)(duration * 0.125)
-  );
+  concat(linear(1.0, 0.015)(duration / 2), linear(0.015, 1.0)(duration / 2));
 
 const overlay = (index: number, length: number) =>
   assignSegments({
@@ -92,19 +81,21 @@ const tunnelCam = (duration: number) =>
     pos: vector(sin(0.3, 0.1), sin(10, 0.002), cos(0.3, 0.1))(duration),
     lookAt: vector(sin(1, 0.2), cos(1, 0.21), sin(1, 0.12))(duration),
     up: vector(sin(1, 0.1), hold(0), cos(1, 0.1))(duration),
-    fov: hold(60.0)(duration),
+    fov: sampleAndHold(beat, add(120)(sin(50, 999))(duration)),
   });
 
 const partTunnel = (duration: number) =>
   assignSegments({
     camera: tunnelCam(duration),
-    overlay: overlay(noTexture, 0),
-    //  concat(
-    //   overlay(noTexture, length / 4),
-    //   overlay(part1Tex, length / 4),
-    //   overlay(noTexture, length / 4),
-    //   overlay(phongTex, length / 4)
-    // ),
+    overlay: repeat(
+      32,
+      concat(
+        overlay(overlayX, beat),
+        overlay(overlayO, beat),
+        overlay(overlaySquare, beat),
+        overlay(overlayTriangle, beat)
+      )
+    ),
     envGeometry: tunnel(duration),
     envFactor: zero(duration),
     lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),

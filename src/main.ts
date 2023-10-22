@@ -50,9 +50,17 @@ const framebuffer = new FrameBuffer(
 );
 const noise = new NoiseBuffer(gl, 1024);
 
-const layers = [new URL("layers/grid.png", import.meta.url)].map(
-  (url) => new Texture(gl, url)
-);
+const layers = [
+  new URL("layers/x.png", import.meta.url),
+  new URL("layers/o.png", import.meta.url),
+  new URL("layers/square.png", import.meta.url),
+  new URL("layers/triangle.png", import.meta.url),
+  new URL("layers/pentagon.png", import.meta.url),
+  new URL("layers/peace.png", import.meta.url),
+  new URL("layers/love.png", import.meta.url),
+  new URL("layers/unity.png", import.meta.url),
+  new URL("layers/respect.png", import.meta.url),
+].map((url) => new Texture(gl, url));
 
 const materials = [
   getBeatenUpMetal(gl),
