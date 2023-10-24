@@ -7,6 +7,7 @@
     "clean": "rm -rf .parcel-cache && rm -rf dist",
     "build": "parcel build src/index.html --no-cache --no-source-maps --dist-dir dist",
     "serve": "npx http-serve dist",
+    "fft": "node fft.js && parcel src/fftTool/index.html --no-cache",
     "capture": "node ./capture.js",
     "convert": "ffmpeg -framerate 60 -pattern_type glob -i './capture/*.png' -i './src/j9-alberga-calculus.mp3' -c:v libx264 -pix_fmt yuv420p -crf 21 capture.mp4"
   },

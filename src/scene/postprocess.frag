@@ -15,6 +15,7 @@ uniform float NOISE_STRENGTH;
 uniform float LAYER_FX;
 uniform float LAYER_ALPHA;
 uniform float POST_EFFECT;
+uniform float DISTANCE_COLOR_FX;
 
 in vec2 TEX_COORD;
 out vec4 FRAG_COLOR;
@@ -104,7 +105,7 @@ void main() {
     // vec3 rgb = vec3(dot(yuv, YUV2RGB_R), dot(yuv, YUV2RGB_G), dot(yuv, YUV2RGB_B));
 
     FRAG_COLOR = vec4(color, 1.0f);
-    float lol = texture(FRAME, TEX_COORD).a / 25.0f;
+    float lol = texture(FRAME, TEX_COORD).a / 25.0f * DISTANCE_COLOR_FX;
     lol *= lol;
     FRAG_COLOR += vec4(lol, lol * 0.5f, lol * 0.1f, 1.0f);
 }

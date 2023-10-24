@@ -7,6 +7,7 @@ import {
   beatCalculator,
   concat,
   cos,
+  fft,
   hold,
   linear,
   loop,
@@ -15,6 +16,7 @@ import {
   sin,
   vector,
 } from "./scripting/index";
+import { testFft } from "./testFft";
 
 const beats = beatCalculator(config.bpm);
 const bars = barCalculator(config.bpm, 4);
@@ -111,6 +113,7 @@ const partTunnel = (duration: number) =>
     ),
     shader: palloShader(duration),
     lightIntensity: repeat(128, linear(10, 0.1)(duration / 128)),
+    distanceColorFx: fft(testFft),
     noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
     timeModifier: loop(64, (i) =>
       percPattern(hold(i * 2.7), hold((i + 0.5) * 2.7))

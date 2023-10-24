@@ -1,7 +1,12 @@
 const { execSync } = require("child_process");
 
+const input = "src/tekkno2.mp3";
+const fftOutput = "src/fftTool/fft.png";
+
+// --------------
+
 const output = execSync(
-  "ffmpeg -i src/tekkno2.mp3 -f null - 2>&1 >/dev/null"
+  `ffmpeg -i ${input} -f null - 2>&1 >/dev/null`
 ).toString();
 
 let time = 0;
@@ -14,5 +19,5 @@ for (const i of output.matchAll(/.*time=(\d\d):(\d\d):(\d\d.\d\d).*/g)) {
 const width = Math.round(60 * time);
 
 execSync(
-  `ffmpeg -y -i src/tekkno2.mp3 -lavfi showspectrumpic=legend=0:color=green:saturation=0:s=${width}x2048 fft.png`
+  `ffmpeg -y -i ${input} -lavfi showspectrumpic=legend=0:color=green:saturation=0:s=${width}x2048 ${fftOutput}`
 );

@@ -194,6 +194,7 @@ loadResources(music, ...materials, ...layers).then(() => {
         LAYER_ALPHA: state.overlay.texture >= 0 ? 1 : 0,
         NOISE_STRENGTH: state.noise,
         POST_EFFECT: state.postEffect,
+        DISTANCE_COLOR_FX: state.distanceColorFx,
       });
       screen.render();
     });
