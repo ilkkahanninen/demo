@@ -51,15 +51,22 @@ const framebuffer = new FrameBuffer(
 const noise = new NoiseBuffer(gl, 1024);
 
 const layers = [
-  new URL("layers/x.png", import.meta.url),
-  new URL("layers/o.png", import.meta.url),
-  new URL("layers/square.png", import.meta.url),
-  new URL("layers/triangle.png", import.meta.url),
-  new URL("layers/pentagon.png", import.meta.url),
-  new URL("layers/peace.png", import.meta.url),
-  new URL("layers/love.png", import.meta.url),
-  new URL("layers/unity.png", import.meta.url),
-  new URL("layers/respect.png", import.meta.url),
+  new URL("layers/symbols-1a.png", import.meta.url),
+  new URL("layers/symbols-1b.png", import.meta.url),
+  new URL("layers/symbols-1c.png", import.meta.url),
+  new URL("layers/symbols-1d.png", import.meta.url),
+  new URL("layers/symbols-2a.png", import.meta.url),
+  new URL("layers/symbols-2b.png", import.meta.url),
+  new URL("layers/symbols-2c.png", import.meta.url),
+  new URL("layers/symbols-2d.png", import.meta.url),
+  new URL("layers/symbols-3a.png", import.meta.url),
+  new URL("layers/symbols-3b.png", import.meta.url),
+  new URL("layers/symbols-3c.png", import.meta.url),
+  new URL("layers/symbols-3d.png", import.meta.url),
+  new URL("layers/symbols-4a.png", import.meta.url),
+  new URL("layers/symbols-4b.png", import.meta.url),
+  new URL("layers/symbols-4c.png", import.meta.url),
+  new URL("layers/symbols-4d.png", import.meta.url),
 ].map((url) => new Texture(gl, url));
 
 const materials = [
@@ -68,7 +75,7 @@ const materials = [
   getUsedStainlessSteel(gl),
 ];
 
-const music = new Music(new URL("tekkno2.mp3", import.meta.url));
+const music = new Music(new URL("tekkno2.ogg", import.meta.url));
 
 loadResources(music, ...materials, ...layers).then(() => {
   const screen = new Rectangle(gl);

@@ -44,6 +44,7 @@ const int TUNNEL = 1;
 const int CUBE = 2;
 const int LIGHT = 3;
 const int HOMMELI = 4;
+const int DEBUG = 10;
 
 struct result {
   float dist;
@@ -211,6 +212,47 @@ vec2 hommeliUvMap(vec3 p) {
   return vec2(u + dst, p.y * 0.05f);
 }
 
+// Pesurumpu
+
+const float drumRadius = 5.0f;
+const float drumLength = 8.5f;
+const float holeSize = 0.2f;
+
+float drumBody(vec3 p) {
+  float d1 = drumRadius - length(p.xz);
+  float dend = drumLength - abs(p.y);
+  return min(d1, dend);
+}
+
+float drumHoles(vec3 p) {
+  if (mod(abs(p.y + 20.5f), 2.0f) >= 1.0f) {
+    p = rotateY(p, PI);
+  }
+
+  vec3 pn = normalize(p);
+  float angle = atan(pn.z, pn.x);
+  const float s = 3.0f;
+  angle = round(angle * s) / s;
+
+  float y = round(p.y);
+
+  vec3 c = vec3(cos(angle) * drumRadius, y, sin(angle) * drumRadius);
+  return length(p - c) - holeSize;
+}
+
+float opSmoothSubtraction(float d1, float d2, float k) {
+  float h = clamp(0.5f - 0.5f * (d2 + d1) / k, 0.0f, 1.0f);
+  return mix(d2, -d1, h) + k * h * (1.0f - h);
+}
+
+result drum(vec3 p) {
+  float body = drumBody(p);
+  float holes = drumHoles(p);
+  float d = opDiff(opSmoothSubtraction(holes, body, 0.1f), body + 0.1f);
+
+  return result(d, p, TUNNEL);
+}
+
 // Skene yhdistettynä
 
 vec3 ballPos(int index) {
@@ -223,6 +265,8 @@ result render(vec3 p) {
   result env = lightOrbs(p);
   if (ENV_GEOMETRY == 1.0f) {
     env = opUnion(tunnel(p), env);
+  } else if (ENV_GEOMETRY == 2.0f) {
+    env = opUnion(drum(p), env);
   }
 
   #ifdef RENDER_ENVIRONMENT_MAP
@@ -440,6 +484,10 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
     return texture(ENVIRONMENT_SAMPLER, r.p).rgb;
   }
   #endif
+
+  if (r.kind == DEBUG) {
+    return vec3(1.0f, 0.5f, 0.0f);
+  }
 
   return vec3(1.0f);
 }

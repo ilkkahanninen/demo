@@ -28,9 +28,7 @@ const bar = bars(1);
 
 const onlyLights = hold(0);
 const tunnel = hold(1);
-const hommeli = hold(2);
-const glitch = hold(3);
-const glitch2 = hold(4);
+const pesurumpu = hold(2);
 
 // Main script
 
@@ -98,7 +96,7 @@ const partTunnel = (duration: number) =>
         overlay(overlayTriangle, beat)
       )
     ),
-    envGeometry: tunnel(duration),
+    envGeometry: pesurumpu(duration),
     envFactor: zero(duration),
     lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
     object: concat(
@@ -121,4 +119,32 @@ const partTunnel = (duration: number) =>
     postEffect: repeat(32, linear(0, 2)(duration / 32)),
   });
 
-export const script = concat(partTunnel(bars(32)));
+const testing = (duration: number) =>
+  assignSegments({
+    camera: assignSegments({
+      pos: vector(hold(0.0), cos(2.0, 0.1), sin(2.0, 0.1))(duration),
+      lookAt: vector(hold(1.0), hold(0.0), hold(0.0))(duration),
+      up: vector(hold(0), hold(0), hold(1))(duration),
+      fov: hold(60)(duration),
+    }),
+    overlay: overlay(noTexture, duration),
+    envGeometry: pesurumpu(duration),
+    envFactor: zero(duration),
+    lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
+    object: hold(0)(duration),
+    material: concat(
+      rustingLinedMetal(duration / 2),
+      beatenUpMetal(duration / 2)
+    ),
+    shader: palloShader(duration),
+    lightIntensity: hold(50)(duration),
+    distanceColorFx: hold(0)(duration),
+    noise: hold(0)(duration),
+    timeModifier: hold(0)(duration),
+    postEffect: hold(0)(duration),
+  });
+
+export const script = concat(
+  //testing(bars(32)),
+  partTunnel(bars(32))
+);

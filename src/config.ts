@@ -4,5 +4,5 @@ export const config = {
     width: 1280,
     height: 720,
   },
-  audio: "tekkno2.mp3",
+  audio: "tekkno2.ogg",
 };
