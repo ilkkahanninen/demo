@@ -74,6 +74,14 @@ export const assignSegments = <T extends object>(obj: {
   };
 };
 
+export const mergeSegments = <T extends object, S extends object>(
+  a: Segment<T>,
+  b: Segment<S>
+): Segment<T & S> => ({
+  duration: Math.max(a.duration, b.duration),
+  get: (time) => ({ ...a.get(time), ...b.get(time) }),
+});
+
 export const vector =
   <T>(...constructors: SegmentCtor<T>[]) =>
   (duration: number): Segment<T[]> => {

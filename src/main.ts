@@ -51,6 +51,18 @@ const framebuffer = new FrameBuffer(
 const noise = new NoiseBuffer(gl, 1024);
 
 const layers = [
+  new URL("layers/intro-01.png", import.meta.url),
+  new URL("layers/intro-02.png", import.meta.url),
+  new URL("layers/intro-03.png", import.meta.url),
+  new URL("layers/intro-05.png", import.meta.url),
+  new URL("layers/intro-06.png", import.meta.url),
+
+  new URL("layers/laundry-01.png", import.meta.url),
+  new URL("layers/laundry-02.png", import.meta.url),
+  new URL("layers/laundry-03.png", import.meta.url),
+  new URL("layers/laundry-04.png", import.meta.url),
+  new URL("layers/laundry-05.png", import.meta.url),
+
   new URL("layers/symbols-1a.png", import.meta.url),
   new URL("layers/symbols-1b.png", import.meta.url),
   new URL("layers/symbols-1c.png", import.meta.url),
@@ -67,6 +79,11 @@ const layers = [
   new URL("layers/symbols-4b.png", import.meta.url),
   new URL("layers/symbols-4c.png", import.meta.url),
   new URL("layers/symbols-4d.png", import.meta.url),
+
+  new URL("layers/repeat.png", import.meta.url),
+  new URL("layers/credits-01.png", import.meta.url),
+  new URL("layers/credits-02.png", import.meta.url),
+  new URL("layers/credits-03.png", import.meta.url),
 ].map((url) => new Texture(gl, url));
 
 const materials = [
