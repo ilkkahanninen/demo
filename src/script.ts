@@ -39,9 +39,13 @@ const enabled = hold(1);
 
 // Materials
 
-const beatenUpMetal = hold(0);
-const rustingLinedMetal = hold(1);
-const stainlessSteel = hold(2);
+const materials = {
+  streakedMetal: hold(0),
+};
+// const beatMetal = hold(0);
+// const beatenUpMetal = hold(0);
+// const rustingLinedMetal = hold(1);
+// const stainlessSteel = hold(2);
 
 // Shaders
 
@@ -121,7 +125,7 @@ const partTunnel = (duration: number) =>
   assignSegments({
     camera: tunnelCam(duration),
     envGeometry: pesurumpu(duration),
-    envFactor: zero(duration),
+    envFactor: linear(1, 100)(duration),
     lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
     object: concat(
       hold(0)(duration / 4),
@@ -129,10 +133,7 @@ const partTunnel = (duration: number) =>
       hold(2)(duration / 4),
       hold(3)(duration / 4)
     ),
-    material: concat(
-      rustingLinedMetal(duration / 2),
-      beatenUpMetal(duration / 2)
-    ),
+    material: materials.streakedMetal(duration),
     shader: palloShader(duration),
     lightIntensity: repeat(128, linear(10, 0.1)(duration / 128)),
     distanceColorFx: fft(testFft),
@@ -155,10 +156,7 @@ const testing = (duration: number) =>
     envFactor: zero(duration),
     lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
     object: hold(0)(duration),
-    material: concat(
-      rustingLinedMetal(duration / 2),
-      beatenUpMetal(duration / 2)
-    ),
+    material: materials.streakedMetal(duration),
     shader: palloShader(duration),
     lightIntensity: hold(50)(duration),
     distanceColorFx: hold(0)(duration),

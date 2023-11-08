@@ -11,9 +11,7 @@ import { NoiseBuffer } from "./NoiseBuffer";
 import { Texture } from "./Texture";
 import { Music } from "./audio";
 import { config } from "./config";
-import { getBeatenUpMetal } from "./materials/beaten-up-metal1-bl/BeatenUpMetal";
-import { getRustingLinedMetal } from "./materials/rusting-lined-metal2-bl/RustingLinedMetal";
-import { getUsedStainlessSteel } from "./materials/used-stainless-steel2-bl/UsedStainlessSteel";
+import { getStreakedMetal } from "./materials/streakedmetal/StreakedMetal";
 import bloomCopySrc from "./scene/bloomCopy.frag";
 import blurXSrc from "./scene/blurX.frag";
 import blurYSrc from "./scene/blurY.frag";
@@ -86,11 +84,7 @@ const layers = [
   new URL("layers/credits-03.png", import.meta.url),
 ].map((url) => new Texture(gl, url));
 
-const materials = [
-  getBeatenUpMetal(gl),
-  getRustingLinedMetal(gl),
-  getUsedStainlessSteel(gl),
-];
+const materials = [getStreakedMetal(gl)];
 
 const music = new Music(new URL("tekkno2.ogg", import.meta.url));
 

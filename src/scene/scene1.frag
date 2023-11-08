@@ -44,6 +44,7 @@ const int TUNNEL = 1;
 const int CUBE = 2;
 const int LIGHT = 3;
 const int HOMMELI = 4;
+const int DRUM = 5;
 const int DEBUG = 10;
 
 struct result {
@@ -214,12 +215,21 @@ vec2 hommeliUvMap(vec3 p) {
 
 // Pesurumpu
 
-const float drumRadius = 5.0f;
+// const float drumRadius = 5.0f;
 const float drumLength = 8.5f;
 const float holeSize = 0.2f;
 
+vec2 drumUvMap(vec3 p) {
+  if (abs(p.y) < drumLength - EPSILON) {
+    vec3 d = normalize(p);
+    float u = 0.5f + atan(d.z, d.x) / (2.0f * PI);
+    return vec2(u, p.y * 0.05f);
+  }
+  return p.xz / 10.0f;
+}
+
 float drumBody(vec3 p) {
-  float d1 = drumRadius - length(p.xz);
+  float d1 = ENV_FACTOR - length(p.xz);
   float dend = drumLength - abs(p.y);
   return min(d1, dend);
 }
@@ -236,7 +246,7 @@ float drumHoles(vec3 p) {
 
   float y = round(p.y);
 
-  vec3 c = vec3(cos(angle) * drumRadius, y, sin(angle) * drumRadius);
+  vec3 c = vec3(cos(angle) * ENV_FACTOR, y, sin(angle) * ENV_FACTOR);
   return length(p - c) - holeSize;
 }
 
@@ -250,7 +260,7 @@ result drum(vec3 p) {
   float holes = drumHoles(p);
   float d = opDiff(opSmoothSubtraction(holes, body, 0.1f), body + 0.1f);
 
-  return result(d, p, TUNNEL);
+  return result(d, p, DRUM);
 }
 
 // Skene yhdistettynä
@@ -453,6 +463,18 @@ vec3 calcMaterial(vec3 p, vec3 eye, result r) {
 
   if (r.kind == TUNNEL) {
     vec2 uv = tunnelUvMap(r.p);
+
+    vec3 albedo = texture(ALBEDO_SAMPLER, uv).rgb;
+    float metallic = texture(METALLIC_SAMPLER, uv).r;
+    float roughness = texture(ROUGHNESS_SAMPLER, uv).r;
+    float ambientOcclusion = texture(AO_SAMPLER, uv).r;
+
+    vec3 color = pbrReflectance(p, eye, albedo, metallic, roughness, ambientOcclusion, 0.0f, BALL_SHADOWS);
+    return color * vec3(0.25f, 0.5f, 1.0f);
+  }
+
+  if (r.kind == DRUM) {
+    vec2 uv = drumUvMap(r.p);
 
     vec3 albedo = texture(ALBEDO_SAMPLER, uv).rgb;
     float metallic = texture(METALLIC_SAMPLER, uv).r;
