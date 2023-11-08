@@ -220,6 +220,8 @@ const float drumLength = 8.5f;
 const float holeSize = 0.2f;
 
 vec2 drumUvMap(vec3 p) {
+  p = rotateY(p, -TIME);
+
   if (abs(p.y) < drumLength - EPSILON) {
     vec3 d = normalize(p);
     float u = 0.5f + atan(d.z, d.x) / (2.0f * PI);
@@ -235,6 +237,8 @@ float drumBody(vec3 p) {
 }
 
 float drumHoles(vec3 p) {
+  p = rotateY(p, -TIME);
+
   if (mod(abs(p.y + 20.5f), 2.0f) >= 1.0f) {
     p = rotateY(p, PI);
   }

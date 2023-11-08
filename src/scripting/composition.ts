@@ -105,3 +105,8 @@ export const flex =
       ...parts.map((part) => part[1]((part[0] / totalLength) * duration))
     );
   };
+
+export const take = <T>(seg: Segment<T>, duration: number): Segment<T> => ({
+  duration,
+  get: seg.get,
+});

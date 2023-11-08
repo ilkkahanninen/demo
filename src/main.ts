@@ -213,6 +213,7 @@ loadResources(music, ...materials, ...layers).then(() => {
         NOISE_STRENGTH: state.noise,
         POST_EFFECT: state.postEffect,
         DISTANCE_COLOR_FX: state.distanceColorFx,
+        SATURATION: state.saturation,
       });
       screen.render();
     });

@@ -16,6 +16,7 @@ uniform float LAYER_FX;
 uniform float LAYER_ALPHA;
 uniform float POST_EFFECT;
 uniform float DISTANCE_COLOR_FX;
+uniform float SATURATION;
 
 in vec2 TEX_COORD;
 out vec4 FRAG_COLOR;
@@ -108,4 +109,9 @@ void main() {
     float lol = texture(FRAME, TEX_COORD).a / 25.0f * DISTANCE_COLOR_FX;
     lol *= lol;
     FRAG_COLOR += vec4(lol, lol * 0.5f, lol * 0.1f, 1.0f);
+
+    if (SATURATION < 1.0f) {
+        float gray = (FRAG_COLOR.r + FRAG_COLOR.g + FRAG_COLOR.b) / 3.0f + noise.r * 0.1f;
+        FRAG_COLOR = mix(vec4(gray * 0.9f, gray * 0.95f, gray, 1.0f), FRAG_COLOR, SATURATION);
+    }
 }

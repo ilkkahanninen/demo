@@ -1,6 +1,5 @@
 import { config } from "./config";
 import {
-  SegmentCtor,
   add,
   assignSegments,
   barCalculator,
@@ -12,6 +11,7 @@ import {
   linear,
   loop,
   mergeSegments,
+  multiplySegments,
   repeat,
   sampleAndHold,
   sin,
@@ -103,16 +103,6 @@ const overlay = (index: number, length: number) =>
 
 // Part: 1
 
-const percPattern = <T>(seg1: SegmentCtor<T>, seg2: SegmentCtor<T>) =>
-  concat(
-    seg1(beat),
-    seg2(beat)
-    // seg1(beat * 0.5),
-    // seg2(beat * 0.5),
-    // seg1(beat * 0.25),
-    // seg2(beat * 0.75)
-  );
-
 const tunnelCam = (duration: number) =>
   assignSegments({
     pos: vector(sin(0.3, 0.1), sin(10, 0.002), cos(0.3, 0.1))(duration),
@@ -121,11 +111,92 @@ const tunnelCam = (duration: number) =>
     fov: sampleAndHold(beat, add(120)(sin(50, 999))(duration)),
   });
 
-const partTunnel = (duration: number) =>
+const introScene = (duration: number) =>
+  assignSegments({
+    camera: assignSegments({
+      pos: vector(hold(1), hold(0), hold(0))(duration),
+      lookAt: vector(hold(0), hold(0), hold(0))(duration),
+      up: vector(hold(0), hold(0), hold(1))(duration),
+      fov: concat(
+        linear(180, 70)(duration / 3),
+        sampleAndHold(beat, add(120)(sin(50, 999))((duration * 2) / 3))
+      ),
+    }),
+    envGeometry: pesurumpu(duration),
+    envFactor: linear(100, 20)(duration),
+    lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
+    object: hold(0)(duration),
+    material: materials.streakedMetal(duration),
+    shader: palloShader(duration),
+    lightIntensity: repeat(128, linear(10, -10)(duration / 128)),
+    noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
+    timeModifier: loop(64, (i) =>
+      concat(
+        hold(i * 2.7)(duration / 128),
+        hold((i + 0.5) * 2.7)(duration / 128)
+      )
+    ),
+    postEffect: hold(0)(duration),
+    saturation: hold(0.0)(duration),
+  });
+
+const introSpeechScene = (duration: number) =>
+  assignSegments({
+    camera: assignSegments({
+      pos: vector(hold(1), hold(0), hold(0))(duration),
+      lookAt: vector(hold(0), hold(0), hold(0))(duration),
+      up: vector(hold(0), hold(0), hold(1))(duration),
+      fov: concat(
+        sampleAndHold(beat, add(120)(sin(50, 999))(duration - beat)),
+        linear(180, 1)(beat)
+      ),
+    }),
+    envGeometry: pesurumpu(duration),
+    envFactor: linear(100, 20)(duration),
+    lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
+    object: hold(0)(duration),
+    material: materials.streakedMetal(duration),
+    shader: palloShader(duration),
+    lightIntensity: repeat(98, linear(10, 0.1)(duration / 98)),
+    noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
+    timeModifier: loop(96, (i) =>
+      concat(
+        hold(i * 2.7)(duration / 192),
+        hold((i + 0.5) * 2.7)(duration / 192)
+      )
+    ),
+    postEffect: hold(0)(duration),
+    saturation: concat(linear(0, 0.4)(duration - beat), linear(0.4, 1)(beat)),
+  });
+
+const laundryScene = (duration: number) =>
+  assignSegments({
+    camera: assignSegments({
+      pos: vector(sin(3, 0.1), sin(10, 0.002), cos(3, 0.1))(duration),
+      lookAt: vector(hold(0), hold(0), hold(0))(duration),
+      up: vector(sin(1, 0.3), hold(0), cos(1, 0.3))(duration),
+      fov: repeat(8, concat(linear(180, 10)(duration / 8))),
+    }),
+    envGeometry: pesurumpu(duration),
+    envFactor: hold(5)(duration),
+    lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
+    object: repeat(16, concat(hold(0)(duration / 32), hold(1)(duration / 32))),
+    material: materials.streakedMetal(duration),
+    shader: palloShader(duration),
+    lightIntensity: repeat(256, linear(3, 0)(duration / 256)),
+    noise: repeat(1024, linear(1.0, 0)(duration / 1024)),
+    timeModifier: loop(32, (i) =>
+      concat(hold(i * 2.7)(duration / 64), hold((i + 0.5) * 2.7)(duration / 64))
+    ),
+    postEffect: repeat(128, linear(0.1, 0)(duration / 128)),
+    saturation: hold(1)(duration),
+  });
+
+const xScene = (duration: number) =>
   assignSegments({
     camera: tunnelCam(duration),
     envGeometry: pesurumpu(duration),
-    envFactor: linear(1, 100)(duration),
+    envFactor: linear(100, 20)(duration),
     lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
     object: concat(
       hold(0)(duration / 4),
@@ -136,12 +207,15 @@ const partTunnel = (duration: number) =>
     material: materials.streakedMetal(duration),
     shader: palloShader(duration),
     lightIntensity: repeat(128, linear(10, 0.1)(duration / 128)),
-    distanceColorFx: fft(testFft),
     noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
     timeModifier: loop(64, (i) =>
-      percPattern(hold(i * 2.7), hold((i + 0.5) * 2.7))
+      concat(
+        hold(i * 2.7)(duration / 128),
+        hold((i + 0.5) * 2.7)(duration / 128)
+      )
     ),
     postEffect: repeat(32, linear(0, 2)(duration / 32)),
+    saturation: hold(1)(duration),
   });
 
 const testing = (duration: number) =>
@@ -159,7 +233,6 @@ const testing = (duration: number) =>
     material: materials.streakedMetal(duration),
     shader: palloShader(duration),
     lightIntensity: hold(50)(duration),
-    distanceColorFx: hold(0)(duration),
     noise: hold(0)(duration),
     timeModifier: hold(0)(duration),
     postEffect: hold(0)(duration),
@@ -263,12 +336,25 @@ const overlayScript = concat(
   overlay(overlays.thankYou, bars(3))
 );
 
+const distanceColorFx = multiplySegments(
+  fft(testFft),
+  concat(linear(0, 1)(bars(32)))
+);
+
 export const script = mergeSegments(
-  concat(
-    //testing(bars(32)),
-    partTunnel(bars(32))
+  mergeSegments(
+    concat(
+      //testing(bars(32)),
+      introScene(bars(24)),
+      introSpeechScene(bars(16)),
+      laundryScene(bars(16)),
+      xScene(bars(64))
+    ),
+    assignSegments({
+      overlay: overlayScript,
+    })
   ),
   assignSegments({
-    overlay: overlayScript,
+    distanceColorFx,
   })
 );
