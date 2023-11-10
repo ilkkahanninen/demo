@@ -301,7 +301,7 @@ const rinseAndRepeatScene = (duration: number) =>
     camera: assignSegments({
       pos: vector(hold(1), hold(0), hold(0))(duration),
       lookAt: vector(hold(0), hold(0), hold(0))(duration),
-      up: vector(hold(0), hold(0), hold(1))(duration),
+      up: vector(cos(1, 0.02), cos(1, 0.003), sin(1, 0.02))(duration),
       fov: concat(linear(180, 1)(duration)),
     }),
     envGeometry: pesurumpu(duration),
@@ -310,34 +310,61 @@ const rinseAndRepeatScene = (duration: number) =>
     object: hold(2)(duration),
     material: materials.streakedMetal(duration),
     shader: palloShader(duration),
-    lightIntensity: repeat(128, linear(10, 0.1)(duration / 128)),
+    lightIntensity: repeat(128 - 16, linear(10, 0.1)(duration / 128)),
     noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
     timeModifier: loop(4, (i) =>
       concat(hold(i * 2.7)(duration / 8), hold((i + 0.5) * 2.7)(duration / 8))
     ),
-    postEffect: hold(0.2)(duration),
+    postEffect: linear(0.2, 0)(duration),
     saturation: linear(0.5, 1)(duration),
   });
 
 const loppuScene = (duration: number) =>
   assignSegments({
-    camera: tunnelCam(duration),
-    envGeometry: pesurumpu(duration),
-    envFactor: linear(100, 20)(duration),
-    lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
-    object: hold(2)(duration),
-    material: materials.streakedMetal(duration),
-    shader: palloShader(duration),
-    lightIntensity: repeat(128, linear(10, 0.1)(duration / 128)),
-    noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
-    timeModifier: loop(64, (i) =>
+    camera: assignSegments({
+      pos: vector(sin(0.3, 0.1), sin(10, 0.002), cos(0.3, 0.1))(duration),
+      lookAt: vector(sin(1, 0.2), cos(1, 0.21), sin(1, 0.12))(duration),
+      up: vector(sin(1, 0.1), hold(0), cos(1, 0.1))(duration),
+      fov: sampleAndHold(beat, add(80)(sin(70, 999))(duration)),
+    }),
+    envGeometry: repeat(
+      32,
+      concat(tunnel(duration / 64), pesurumpu(duration / 64))
+    ),
+    envFactor: add(3)(sin(2, 1))(duration),
+    lightCount: hold(3)(duration / 2),
+    object: repeat(
+      16,
       concat(
-        hold(i * 2.7)(duration / 128),
-        hold((i + 0.5) * 2.7)(duration / 128)
+        hold(0)(duration / 64),
+        hold(1)(duration / 64),
+        hold(2)(duration / 64),
+        hold(3)(duration / 64)
       )
     ),
-    postEffect: repeat(32, linear(0, 2)(duration / 32)),
-    saturation: hold(1)(duration),
+    material: materials.streakedMetal(duration),
+    shader: palloShader(duration),
+    lightIntensity: concat(
+      repeat(64, linear(10, 0.1)(duration / 128)),
+      repeat(128, linear(10, 0.1)(duration / 256))
+    ),
+    noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
+    timeModifier: concat(
+      loop(32, (i) =>
+        concat(
+          hold(i * 2.7)(duration / 128),
+          hold((i + 0.5) * 2.7)(duration / 128)
+        )
+      ),
+      loop(64, (i) =>
+        concat(
+          hold(i * 2.7)(duration / 256),
+          hold((i + 0.5) * 2.7)(duration / 256)
+        )
+      )
+    ),
+    postEffect: repeat(32, linear(1, 0)(duration / 32)),
+    saturation: repeat(64, linear(1, 0)(duration / 64)),
   });
 
 const xScene = (duration: number) =>
@@ -374,13 +401,24 @@ const testing = (duration: number) =>
       up: vector(hold(0), hold(0), hold(1))(duration),
       fov: hold(60)(duration),
     }),
-    envGeometry: pesurumpu(duration),
-    envFactor: zero(duration),
-    lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
-    object: hold(0)(duration),
+    envGeometry: repeat(
+      16,
+      concat(pesurumpu(duration / 32), tunnel(duration / 32))
+    ),
+    envFactor: add(3)(sin(2, 1))(duration),
+    lightCount: hold(3)(duration),
+    object: repeat(
+      32,
+      concat(
+        hold(0)(duration / 128),
+        hold(1)(duration / 128),
+        hold(2)(duration / 128),
+        hold(3)(duration / 128)
+      )
+    ),
     material: materials.streakedMetal(duration),
     shader: palloShader(duration),
-    lightIntensity: hold(50)(duration),
+    lightIntensity: repeat(128, linear(10, 0.1)(duration / 128)),
     noise: hold(0)(duration),
     timeModifier: hold(0)(duration),
     postEffect: hold(0)(duration),
@@ -495,7 +533,29 @@ const overlayScript = concat(
   ),
 
   // Teknotauko
-  overlay(overlays.none, bars(16)),
+  overlay(overlays.none, bars(8)),
+
+  repeat(
+    2,
+    concat(
+      overlay(overlays.symbol1a, beat),
+      overlay(overlays.symbol2a, beat),
+      overlay(overlays.symbol3a, beat),
+      overlay(overlays.symbol4a, beat),
+      overlay(overlays.symbol1b, beat),
+      overlay(overlays.symbol2b, beat),
+      overlay(overlays.symbol3b, beat),
+      overlay(overlays.symbol4b, beat),
+      overlay(overlays.symbol1c, beat),
+      overlay(overlays.symbol2c, beat),
+      overlay(overlays.symbol3c, beat),
+      overlay(overlays.symbol4c, beat),
+      overlay(overlays.symbol1d, beat),
+      overlay(overlays.symbol2d, beat),
+      overlay(overlays.symbol3d, beat),
+      overlay(overlays.symbol4d, beat)
+    )
+  ),
 
   // Lopputekstit
   overlay(overlays.credits01, bars(4)),
@@ -512,7 +572,6 @@ const distanceColorFx = multiplySegments(
 export const script = mergeSegments(
   mergeSegments(
     concat(
-      //testing(bars(32)),
       introScene(bars(24)),
       introSpeechScene(bars(16)),
       laundryScene(bars(16)),
