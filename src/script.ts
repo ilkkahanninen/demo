@@ -42,10 +42,6 @@ const enabled = hold(1);
 const materials = {
   streakedMetal: hold(0),
 };
-// const beatMetal = hold(0);
-// const beatenUpMetal = hold(0);
-// const rustingLinedMetal = hold(1);
-// const stainlessSteel = hold(2);
 
 // Shaders
 
@@ -180,7 +176,7 @@ const laundryScene = (duration: number) =>
     envGeometry: pesurumpu(duration),
     envFactor: hold(5)(duration),
     lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
-    object: repeat(16, concat(hold(0)(duration / 32), hold(1)(duration / 32))),
+    object: hold(1)(duration),
     material: materials.streakedMetal(duration),
     shader: palloShader(duration),
     lightIntensity: repeat(256, linear(3, 0)(duration / 256)),
@@ -189,6 +185,158 @@ const laundryScene = (duration: number) =>
       concat(hold(i * 2.7)(duration / 64), hold((i + 0.5) * 2.7)(duration / 64))
     ),
     postEffect: repeat(128, linear(0.1, 0)(duration / 128)),
+    saturation: hold(1)(duration),
+  });
+
+const washingScene = (duration: number) =>
+  assignSegments({
+    camera: assignSegments({
+      pos: vector(sin(0.3, 0.01), sin(10, 0.002), cos(0.3, 0.01))(duration),
+      lookAt: vector(sin(1, 0.02), cos(1, 0.021), sin(1, 0.012))(duration),
+      up: vector(sin(1, 0.01), hold(0), cos(1, 0.01))(duration),
+      fov: linear(180, 10)(duration),
+    }),
+    envGeometry: pesurumpu(duration),
+    envFactor: linear(100, 1)(duration),
+    lightCount: hold(3)(duration / 2),
+    object: hold(0)(duration),
+    material: materials.streakedMetal(duration),
+    shader: palloShader(duration),
+    lightIntensity: repeat(128, linear(10, 0.1)(duration / 128)),
+    noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
+    timeModifier: loop(64, (i) =>
+      concat(
+        hold(i * 2.7)(duration / 128),
+        hold((i + 0.5) * 2.7)(duration / 128)
+      )
+    ),
+    postEffect: repeat(32, linear(0, 2)(duration / 32)),
+    saturation: hold(1)(duration),
+  });
+
+const bleachScene = (duration: number) =>
+  assignSegments({
+    camera: assignSegments({
+      pos: vector(sin(0.3, 0.01), sin(10, 0.002), cos(0.3, 0.01))(duration),
+      lookAt: vector(sin(1, 0.02), cos(1, 0.021), sin(1, 0.012))(duration),
+      up: vector(sin(1, 0.01), hold(0), cos(1, 0.01))(duration),
+      fov: sampleAndHold(beats(2), add(120)(sin(50, 999))(duration)),
+    }),
+    envGeometry: tunnel(duration),
+    envFactor: hold(3)(duration),
+    lightCount: hold(3)(duration),
+    object: hold(0)(duration),
+    material: materials.streakedMetal(duration),
+    shader: palloShader(duration),
+    lightIntensity: repeat(64, linear(10, -10)(duration / 64)),
+    noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
+    timeModifier: loop(64, (i) =>
+      concat(
+        hold(i * 2.7)(duration / 128),
+        hold((i + 0.5) * 2.7)(duration / 128)
+      )
+    ),
+    postEffect: repeat(32, linear(0, 2)(duration / 32)),
+    saturation: concat(
+      linear(1, 0.1)(bar),
+      hold(0.1)(duration - bars(2)),
+      linear(0.1, 1)(bar)
+    ),
+  });
+
+const tumbleDryScene = (duration: number) =>
+  assignSegments({
+    camera: assignSegments({
+      pos: vector(sin(0.3, 0.01), sin(10, 0.002), cos(0.3, 0.01))(duration),
+      lookAt: vector(sin(1, 0.02), cos(1, 0.021), sin(1, 0.012))(duration),
+      up: vector(sin(1, 0.01), hold(0), cos(1, 0.01))(duration),
+      fov: sampleAndHold(beats(2), add(120)(sin(50, 999))(duration)),
+    }),
+    envGeometry: tunnel(duration),
+    envFactor: hold(3)(duration),
+    lightCount: hold(3)(duration),
+    object: hold(3)(duration),
+    material: materials.streakedMetal(duration),
+    shader: palloShader(duration),
+    lightIntensity: repeat(64, linear(100, -100)(duration / 64)),
+    noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
+    timeModifier: loop(64, (i) =>
+      concat(
+        hold(i * 2.7)(duration / 128),
+        hold((i + 0.5) * 2.7)(duration / 128)
+      )
+    ),
+    postEffect: repeat(32, linear(0, 2)(duration / 32)),
+    saturation: hold(1)(duration - bars(2)),
+  });
+
+const drycleanScene = (duration: number) =>
+  assignSegments({
+    camera: assignSegments({
+      pos: vector(sin(0.3, 0.01), hold(2), cos(0.3, 0.01))(duration),
+      lookAt: vector(sin(1, 0.02), cos(1, 0.021), sin(1, 0.012))(duration),
+      up: vector(sin(1, 0.01), hold(0), cos(1, 0.01))(duration),
+      fov: sampleAndHold(beats(2), add(120)(sin(50, 999))(duration)),
+    }),
+    envGeometry: tunnel(duration),
+    envFactor: hold(3)(duration),
+    lightCount: hold(3)(duration),
+    object: hold(1)(duration),
+    material: materials.streakedMetal(duration),
+    shader: palloShader(duration),
+    lightIntensity: repeat(64, linear(100, 0)(duration / 64)),
+    noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
+    timeModifier: loop(64, (i) =>
+      concat(
+        hold(i * 2.7)(duration / 128),
+        hold((i + 0.5) * 2.7)(duration / 128)
+      )
+    ),
+    postEffect: repeat(128, linear(1, 0)(duration / 128)),
+    saturation: hold(1)(duration - bars(2)),
+  });
+
+const rinseAndRepeatScene = (duration: number) =>
+  assignSegments({
+    camera: assignSegments({
+      pos: vector(hold(1), hold(0), hold(0))(duration),
+      lookAt: vector(hold(0), hold(0), hold(0))(duration),
+      up: vector(hold(0), hold(0), hold(1))(duration),
+      fov: concat(linear(180, 1)(duration)),
+    }),
+    envGeometry: pesurumpu(duration),
+    envFactor: linear(100, 20)(duration),
+    lightCount: hold(3)(duration),
+    object: hold(2)(duration),
+    material: materials.streakedMetal(duration),
+    shader: palloShader(duration),
+    lightIntensity: repeat(128, linear(10, 0.1)(duration / 128)),
+    noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
+    timeModifier: loop(4, (i) =>
+      concat(hold(i * 2.7)(duration / 8), hold((i + 0.5) * 2.7)(duration / 8))
+    ),
+    postEffect: hold(0.2)(duration),
+    saturation: linear(0.5, 1)(duration),
+  });
+
+const loppuScene = (duration: number) =>
+  assignSegments({
+    camera: tunnelCam(duration),
+    envGeometry: pesurumpu(duration),
+    envFactor: linear(100, 20)(duration),
+    lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
+    object: hold(2)(duration),
+    material: materials.streakedMetal(duration),
+    shader: palloShader(duration),
+    lightIntensity: repeat(128, linear(10, 0.1)(duration / 128)),
+    noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
+    timeModifier: loop(64, (i) =>
+      concat(
+        hold(i * 2.7)(duration / 128),
+        hold((i + 0.5) * 2.7)(duration / 128)
+      )
+    ),
+    postEffect: repeat(32, linear(0, 2)(duration / 32)),
     saturation: hold(1)(duration),
   });
 
@@ -229,6 +377,26 @@ const testing = (duration: number) =>
     envGeometry: pesurumpu(duration),
     envFactor: zero(duration),
     lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
+    object: hold(0)(duration),
+    material: materials.streakedMetal(duration),
+    shader: palloShader(duration),
+    lightIntensity: hold(50)(duration),
+    noise: hold(0)(duration),
+    timeModifier: hold(0)(duration),
+    postEffect: hold(0)(duration),
+  });
+
+const slut = (duration: number) =>
+  assignSegments({
+    camera: assignSegments({
+      pos: vector(hold(0.0), hold(0.1), hold(0))(duration),
+      lookAt: vector(hold(0.0), hold(0.0), hold(0.0))(duration),
+      up: vector(hold(0), hold(0), hold(1))(duration),
+      fov: hold(60)(duration),
+    }),
+    envGeometry: hold(0)(duration),
+    envFactor: zero(duration),
+    lightCount: hold(0)(duration),
     object: hold(0)(duration),
     material: materials.streakedMetal(duration),
     shader: palloShader(duration),
@@ -348,7 +516,16 @@ export const script = mergeSegments(
       introScene(bars(24)),
       introSpeechScene(bars(16)),
       laundryScene(bars(16)),
-      xScene(bars(64))
+
+      washingScene(bars(8)),
+      bleachScene(bars(8)),
+      tumbleDryScene(bars(8)),
+      drycleanScene(bars(8)),
+
+      rinseAndRepeatScene(bars(8)),
+      loppuScene(bars(16)),
+      xScene(bars(8)),
+      slut(bars(64))
     ),
     assignSegments({
       overlay: overlayScript,
