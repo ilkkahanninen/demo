@@ -86,6 +86,8 @@ const overlays = {
   credits01: 27,
   credits02: 28,
   thankYou: 29,
+
+  seizureWarning: 30,
 };
 
 const overlayFx = (duration: number) =>
@@ -175,11 +177,11 @@ const laundryScene = (duration: number) =>
     }),
     envGeometry: pesurumpu(duration),
     envFactor: hold(5)(duration),
-    lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
+    lightCount: hold(3)(duration),
     object: hold(1)(duration),
     material: materials.streakedMetal(duration),
     shader: palloShader(duration),
-    lightIntensity: repeat(256, linear(3, 0)(duration / 256)),
+    lightIntensity: repeat(256, linear(10, 0)(duration / 256)),
     noise: repeat(1024, linear(1.0, 0)(duration / 1024)),
     timeModifier: loop(32, (i) =>
       concat(hold(i * 2.7)(duration / 64), hold((i + 0.5) * 2.7)(duration / 64))
@@ -225,7 +227,7 @@ const bleachScene = (duration: number) =>
     envGeometry: tunnel(duration),
     envFactor: hold(3)(duration),
     lightCount: hold(3)(duration),
-    object: hold(0)(duration),
+    object: hold(2)(duration),
     material: materials.streakedMetal(duration),
     shader: palloShader(duration),
     lightIntensity: repeat(64, linear(10, -10)(duration / 64)),
@@ -258,7 +260,15 @@ const tumbleDryScene = (duration: number) =>
     object: hold(3)(duration),
     material: materials.streakedMetal(duration),
     shader: palloShader(duration),
-    lightIntensity: repeat(64, linear(100, -100)(duration / 64)),
+    lightIntensity: repeat(
+      16,
+      concat(
+        linear(10, 0)(duration / 64),
+        linear(5, 0)(duration / 64),
+        linear(10, 0)(duration / 64),
+        linear(5, -5)(duration / 64)
+      )
+    ),
     noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
     timeModifier: loop(64, (i) =>
       concat(
@@ -284,7 +294,7 @@ const drycleanScene = (duration: number) =>
     object: hold(1)(duration),
     material: materials.streakedMetal(duration),
     shader: palloShader(duration),
-    lightIntensity: repeat(64, linear(100, 0)(duration / 64)),
+    lightIntensity: repeat(64, linear(200, 0)(duration / 64)),
     noise: repeat(1024, linear(0.5, 0)(duration / 1024)),
     timeModifier: loop(64, (i) =>
       concat(
@@ -292,7 +302,10 @@ const drycleanScene = (duration: number) =>
         hold((i + 0.5) * 2.7)(duration / 128)
       )
     ),
-    postEffect: repeat(128, linear(1, 0)(duration / 128)),
+    postEffect: multiplySegments(
+      repeat(128, linear(1, 0)(duration / 128)),
+      linear(0.2, 1)(duration)
+    ),
     saturation: hold(1)(duration - bars(2)),
   });
 
@@ -389,39 +402,8 @@ const xScene = (duration: number) =>
         hold((i + 0.5) * 2.7)(duration / 128)
       )
     ),
-    postEffect: repeat(32, linear(0, 2)(duration / 32)),
+    postEffect: repeat(32, linear(1, 0)(duration / 32)),
     saturation: hold(1)(duration),
-  });
-
-const testing = (duration: number) =>
-  assignSegments({
-    camera: assignSegments({
-      pos: vector(hold(0.0), cos(2.0, 0.1), sin(2.0, 0.1))(duration),
-      lookAt: vector(hold(1.0), hold(0.0), hold(0.0))(duration),
-      up: vector(hold(0), hold(0), hold(1))(duration),
-      fov: hold(60)(duration),
-    }),
-    envGeometry: repeat(
-      16,
-      concat(pesurumpu(duration / 32), tunnel(duration / 32))
-    ),
-    envFactor: add(3)(sin(2, 1))(duration),
-    lightCount: hold(3)(duration),
-    object: repeat(
-      32,
-      concat(
-        hold(0)(duration / 128),
-        hold(1)(duration / 128),
-        hold(2)(duration / 128),
-        hold(3)(duration / 128)
-      )
-    ),
-    material: materials.streakedMetal(duration),
-    shader: palloShader(duration),
-    lightIntensity: repeat(128, linear(10, 0.1)(duration / 128)),
-    noise: hold(0)(duration),
-    timeModifier: hold(0)(duration),
-    postEffect: hold(0)(duration),
   });
 
 const slut = (duration: number) =>
@@ -442,10 +424,13 @@ const slut = (duration: number) =>
     noise: hold(0)(duration),
     timeModifier: hold(0)(duration),
     postEffect: hold(0)(duration),
+    saturation: linear(1, 0)(bars(4)),
   });
 
 const overlayScript = concat(
-  overlay(overlays.none, bars(24)),
+  overlay(overlays.none, bars(2)),
+  overlay(overlays.seizureWarning, bars(6)),
+  overlay(overlays.none, bars(16)),
 
   // Listen, you need to understand...
   repeat(

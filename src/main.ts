@@ -82,6 +82,8 @@ const layers = [
   new URL("layers/credits-01.png", import.meta.url),
   new URL("layers/credits-02.png", import.meta.url),
   new URL("layers/credits-03.png", import.meta.url),
+
+  new URL("layers/seizure.png", import.meta.url),
 ].map((url) => new Texture(gl, url));
 
 const materials = [getStreakedMetal(gl)];

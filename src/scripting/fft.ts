@@ -1,4 +1,4 @@
-const BITRATE = 60;
+const BITRATE = 30;
 
 export const fft = (data: number[]) => {
   const duration = data.length / BITRATE;

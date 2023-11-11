@@ -1,6 +1,6 @@
 const { execSync } = require("child_process");
 
-const input = "src/tekkno2.mp3";
+const input = "fft.ogg";
 const fftOutput = "src/fftTool/fft.png";
 
 // --------------
@@ -16,7 +16,7 @@ for (const i of output.matchAll(/.*time=(\d\d):(\d\d):(\d\d.\d\d).*/g)) {
   time = Math.max(time, t);
 }
 
-const width = Math.round(60 * time);
+const width = Math.round(30 * time);
 
 execSync(
   `ffmpeg -y -i ${input} -lavfi showspectrumpic=legend=0:color=green:saturation=0:s=${width}x2048 ${fftOutput}`
