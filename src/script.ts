@@ -335,7 +335,7 @@ const rinseAndRepeatScene = (duration: number) =>
 const loppuScene = (duration: number) =>
   assignSegments({
     camera: assignSegments({
-      pos: vector(sin(0.3, 0.1), sin(10, 0.002), cos(0.3, 0.1))(duration),
+      pos: vector(sin(0.3, 0.1), sin(20, 0.002), cos(0.3, 0.1))(duration),
       lookAt: vector(sin(1, 0.2), cos(1, 0.21), sin(1, 0.12))(duration),
       up: vector(sin(1, 0.1), hold(0), cos(1, 0.1))(duration),
       fov: sampleAndHold(beat, add(80)(sin(70, 999))(duration)),

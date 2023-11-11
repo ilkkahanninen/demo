@@ -65,7 +65,7 @@ vec3 textLayer(vec4 noise) {
 
 void main() {
     vec4 noise = texture(NOISE, TEX_COORD + NOISE_POS);
-    vec3 current = texture(FRAME, TEX_COORD).rgb;
+    vec3 current = vec3(texture(FRAME, TEX_COORD - vec2(0.002f, 0.0f)).r, texture(FRAME, TEX_COORD).g, texture(FRAME, TEX_COORD + vec2(0.002f, 0.0f)).b);
     vec3 layer = textLayer(noise);
     vec3 basicColor = pow(current / (current + vec3(1.0f)), vec3(1.0f / GAMMA)) + layer;
     vec3 bloom = texture(BLOOM, TEX_COORD).rgb;
@@ -91,7 +91,7 @@ void main() {
 
     color += bloom;
 
-    float p = sin(TEX_COORD.y * (3000.0f + 2000.0f * sin(TIME * 1.5f)) + TIME * 5.0f);
+    float p = sin(TEX_COORD.y * (5000.0f + 2000.0f * sin(TIME * 1.5f)) + TIME * 5.0f);
     vec3 stripedColor = color * vec3(.6f + 0.5f * sin(TEX_COORD.x * p), .6f + 0.5f * sin(TEX_COORD.x * p + 2.0944f), .6f + 0.5f * sin(TEX_COORD.x * p + 4.1888f));
 
     color = mix(color, stripedColor, 0.5f + 0.5f * sin(TEX_COORD.y + TIME));
