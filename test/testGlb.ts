@@ -10,4 +10,4 @@ for (let i = 0; i < file.length; i++) {
 }
 
 const asset = fromGltfBinary(arrayBuffer);
-console.log(asset);
+console.log(asset.json.bufferViews);

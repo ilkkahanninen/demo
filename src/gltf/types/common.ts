@@ -32,7 +32,7 @@ export type CLAMP_TO_EDGE = WebGL2RenderingContext["CLAMP_TO_EDGE"];
 export type MIRRORED_REPEAT = WebGL2RenderingContext["MIRRORED_REPEAT"];
 export type REPEAT = WebGL2RenderingContext["REPEAT"];
 
-export type Extension = object;
+export { Extensions as Extension } from "../extensions/supported";
 
 export type Extras = any;
 

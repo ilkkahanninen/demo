@@ -1,11 +1,12 @@
 import { readGlbData } from "./loaders/glbReader";
-import { GLTF } from "./types/glTF";
+import { GLTF, checkEngineSupport } from "./types/glTF";
 
 export class GlTFAsset {
   json: GLTF;
   bin?: Uint8Array;
 
   constructor(json: GLTF, bin?: Uint8Array) {
+    checkEngineSupport(json);
     this.json = json;
     this.bin = bin;
   }

@@ -1,3 +1,4 @@
+import { supportedExtensions } from "../extensions/supported";
 import { Accessor } from "./Accessor";
 import { Animation } from "./Animation";
 import { Buffer, BufferView } from "./Buffer";
@@ -129,3 +130,30 @@ export type Asset = {
  * The glTF version in the form of <major>.<minor>.
  */
 export type Version = `${number}.${number}`;
+
+export const checkEngineSupport = (gltf: GLTF) => {
+  const checkExtensions = (
+    exts: string[] | undefined,
+    onError: (exts: string) => void
+  ) => {
+    if (exts) {
+      const unsupportedExts = exts.filter(
+        (id) => !supportedExtensions.includes(id)
+      );
+      if (unsupportedExts.length > 0) {
+        onError(unsupportedExts.join(", "));
+      }
+    }
+  };
+
+  checkExtensions(gltf.extensionsUsed, (exts) =>
+    console.warn(
+      `GlTF asset uses extensions which are not supported by the engine: ${exts}`
+    )
+  );
+  checkExtensions(gltf.extensionsRequired, (exts) =>
+    console.error(
+      `GlTF asset requires extensions which are not supported by the engine: ${exts}`
+    )
+  );
+};
