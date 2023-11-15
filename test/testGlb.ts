@@ -9,5 +9,11 @@ for (let i = 0; i < file.length; i++) {
   view[i] = file[i];
 }
 
-const asset = fromGltfBinary(arrayBuffer);
-console.log(asset.json.bufferViews);
+const asset = fromGltfBinary(
+  null as any as WebGL2RenderingContext,
+  arrayBuffer
+);
+
+// console.log(asset.json.bufferViews);
+
+asset.loadScene();

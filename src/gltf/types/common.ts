@@ -53,3 +53,11 @@ export type FixedLengthArray<
   [I: number]: T;
   [Symbol.iterator]: () => IterableIterator<T>;
 };
+
+export const initError = (msg: string, data?: any) =>
+  new Error(
+    `Initialization error: ${msg}${
+      data !== undefined ? JSON.stringify(data) : ""
+    }`
+  );
+export const unsupported = (msg: string) => new Error(`Unsupported: ${msg}`);

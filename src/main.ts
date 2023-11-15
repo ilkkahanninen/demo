@@ -11,6 +11,7 @@ import { NoiseBuffer } from "./NoiseBuffer";
 import { Texture } from "./Texture";
 import { Music } from "./audio";
 import { config } from "./config";
+import { fromGltfBinaryUrl } from "./gltf/index";
 import { getStreakedMetal } from "./materials/streakedmetal/StreakedMetal";
 import bloomCopySrc from "./scene/bloomCopy.frag";
 import blurXSrc from "./scene/blurX.frag";
@@ -39,6 +40,12 @@ if (process.env.NODE_ENV !== "production") {
     );
   }
 }
+
+fromGltfBinaryUrl(gl, new URL("../test/Lantern.glb", import.meta.url))
+  .then((asset) => {
+    asset.loadScene();
+  })
+  .catch(console.error);
 
 const environmentMap = new CubeMapBuffer(gl, 512);
 const framebuffer = new FrameBuffer(

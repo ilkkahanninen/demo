@@ -59,3 +59,9 @@ export type BufferImage = {
    */
   extras?: Extras;
 };
+
+export const isURIImage = (image: Image): image is URIImage =>
+  (image as URIImage).uri !== undefined;
+
+export const isBufferImage = (image: Image): image is BufferImage =>
+  (image as BufferImage).bufferView !== undefined;

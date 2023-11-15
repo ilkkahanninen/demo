@@ -1,10 +1,17 @@
-export type Vec = Vec2 | Vec3;
+export type Vec = Vec2 | Vec3 | Vec4;
 
 export type Vec2 = [number, number];
 export type Vec3 = [number, number, number];
+export type Vec4 = [number, number, number, number];
 
 export const vec2 = (x: number, y: number): Vec2 => [x, y];
 export const vec3 = (x: number, y: number, z: number): Vec3 => [x, y, z];
+export const vec4 = (x: number, y: number, z: number, w: number): Vec4 => [
+  x,
+  y,
+  z,
+  w,
+];
 
 export const length = (v: Vec): number =>
   Math.sqrt(v.map((a) => a * a).reduce((a, b) => a + b));

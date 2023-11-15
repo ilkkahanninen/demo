@@ -1,4 +1,3 @@
-import { Node } from "./Node";
 import { Extension, Extras, NonEmptyArray } from "./common";
 
 /**
@@ -8,7 +7,7 @@ export type Scene = {
   /**
    * The indices of each root node.
    */
-  nodes?: NonEmptyArray<Node>;
+  nodes?: NonEmptyArray<number>;
   /**
    * The user-defined name of this object. This is not necessarily unique, e.g., an accessor and a buffer could have the same name,
    * or two accessors could even have the same name.
