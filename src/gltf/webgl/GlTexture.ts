@@ -4,7 +4,16 @@ import { Texture, TextureInfo } from "../types/Texture";
 import { unsupported } from "../types/common";
 
 export class GlTexture {
-  constructor(gl: WebGL2RenderingContext, asset: GlTFAsset, texture: Texture) {
+  texCoord: number;
+
+  constructor(
+    gl: WebGL2RenderingContext,
+    asset: GlTFAsset,
+    texture: Texture,
+    texCoord: number = 0
+  ) {
+    this.texCoord = texCoord;
+
     if (texture.source !== undefined) {
       const imageInfo = asset.getImage(texture.source);
       if (isURIImage(imageInfo)) {
@@ -69,6 +78,11 @@ export class GlTexture {
     asset: GlTFAsset,
     info: TextureInfo
   ) {
-    return new GlTexture(gl, asset, asset.getTexture(info.index));
+    return new GlTexture(
+      gl,
+      asset,
+      asset.getTexture(info.index),
+      info.texCoord
+    );
   }
 }

@@ -9,7 +9,10 @@ export class GlMaterial {
   metallicRoughnessTexture?: GlTexture;
   metallicFactor: number;
   roughnessFactor: number;
+  emissiveFactor: FixedLengthArray<number, 3>;
+  emissiveTexture?: GlTexture;
   normalTexture?: GlTexture;
+  normalScale?: number;
 
   constructor(
     gl: WebGL2RenderingContext,
@@ -35,6 +38,23 @@ export class GlMaterial {
         gl,
         asset,
         pbr.metallicRoughnessTexture
+      );
+    }
+    if (material.normalTexture) {
+      this.normalTexture = GlTexture.fromTextureInfo(
+        gl,
+        asset,
+        material.normalTexture
+      );
+      this.normalScale = material.normalTexture.scale ?? 1;
+    }
+
+    this.emissiveFactor = material.emissiveFactor ?? [0, 0, 0];
+    if (material.emissiveTexture) {
+      this.emissiveTexture = GlTexture.fromTextureInfo(
+        gl,
+        asset,
+        material.emissiveTexture
       );
     }
   }

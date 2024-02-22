@@ -88,6 +88,13 @@ const overlays = {
   thankYou: 29,
 
   seizureWarning: 30,
+  seizureWarning2: 31,
+  seizureWarning3: 32,
+
+  overlay1: 33,
+  overlay2: 34,
+  overlay3: 35,
+  overlay4: 36,
 };
 
 const overlayFx = (duration: number) =>
@@ -135,7 +142,13 @@ const introScene = (duration: number) =>
       )
     ),
     postEffect: hold(0)(duration),
-    saturation: hold(0.0)(duration),
+    saturation: repeat(
+      3,
+      concat(
+        hold(0.0)(bars(7) + beats(3)),
+        repeat(4, concat(hold(1)(beat / 8), hold(0)(beat / 8)))
+      )
+    ),
   });
 
 const introSpeechScene = (duration: number) =>
@@ -429,7 +442,9 @@ const slut = (duration: number) =>
 
 const overlayScript = concat(
   overlay(overlays.none, bars(2)),
-  overlay(overlays.seizureWarning, bars(6)),
+  overlay(overlays.seizureWarning, bars(5) + beats(2)),
+  overlay(overlays.seizureWarning2, beat),
+  overlay(overlays.seizureWarning3, beat),
   overlay(overlays.none, bars(16)),
 
   // Listen, you need to understand...
@@ -458,15 +473,24 @@ const overlayScript = concat(
   // huom. tästä kohtaa tarkoituksella puuttuu 1.25 iskua
 
   // We need to do some laundry
-  repeat(
-    8,
+  loop(8, (index) =>
     concat(
       overlay(overlays.we, beats(1)),
       overlay(overlays.need, beats(0.25)),
       overlay(overlays.toDo, beats(1)),
       overlay(overlays.some, beats(0.75)),
       overlay(overlays.laundry, beats(1)),
-      overlay(overlays.none, beats(4))
+      overlay(overlays.none, beats(1)),
+      overlay(
+        [
+          overlays.overlay1,
+          overlays.overlay2,
+          overlays.overlay3,
+          overlays.overlay4,
+        ][index % 4],
+        beats(2)
+      ),
+      overlay(overlays.none, beat)
     )
   ),
   overlay(overlays.none, beats(1.25)),
@@ -520,28 +544,40 @@ const overlayScript = concat(
   // Teknotauko
   overlay(overlays.none, bars(8)),
 
-  repeat(
-    2,
-    concat(
-      overlay(overlays.symbol1a, beat),
-      overlay(overlays.symbol2a, beat),
-      overlay(overlays.symbol3a, beat),
-      overlay(overlays.symbol4a, beat),
-      overlay(overlays.symbol1b, beat),
-      overlay(overlays.symbol2b, beat),
-      overlay(overlays.symbol3b, beat),
-      overlay(overlays.symbol4b, beat),
-      overlay(overlays.symbol1c, beat),
-      overlay(overlays.symbol2c, beat),
-      overlay(overlays.symbol3c, beat),
-      overlay(overlays.symbol4c, beat),
-      overlay(overlays.symbol1d, beat),
-      overlay(overlays.symbol2d, beat),
-      overlay(overlays.symbol3d, beat),
-      overlay(overlays.symbol4d, beat)
-    )
+  concat(
+    overlay(overlays.symbol1a, beat),
+    overlay(overlays.overlay1, beat),
+    overlay(overlays.symbol2a, beat),
+    overlay(overlays.overlay2, beat),
+    overlay(overlays.symbol3a, beat),
+    overlay(overlays.overlay3, beat),
+    overlay(overlays.symbol4a, beat),
+    overlay(overlays.overlay4, beat),
+    overlay(overlays.symbol1b, beat),
+    overlay(overlays.overlay1, beat),
+    overlay(overlays.symbol2b, beat),
+    overlay(overlays.overlay2, beat),
+    overlay(overlays.symbol3b, beat),
+    overlay(overlays.overlay3, beat),
+    overlay(overlays.symbol4b, beat),
+    overlay(overlays.overlay4, beat),
+    overlay(overlays.symbol1c, beat),
+    overlay(overlays.overlay1, beat),
+    overlay(overlays.symbol2c, beat),
+    overlay(overlays.overlay2, beat),
+    overlay(overlays.symbol3c, beat),
+    overlay(overlays.overlay3, beat),
+    overlay(overlays.symbol4c, beat),
+    overlay(overlays.overlay4, beat),
+    overlay(overlays.symbol1d, beat),
+    overlay(overlays.overlay1, beat),
+    overlay(overlays.symbol2d, beat),
+    overlay(overlays.overlay2, beat),
+    overlay(overlays.symbol3d, beat),
+    overlay(overlays.overlay3, beat),
+    overlay(overlays.symbol4d, beat),
+    overlay(overlays.none, beat)
   ),
-
   // Lopputekstit
   overlay(overlays.credits01, bars(4)),
   overlay(overlays.credits02, bars(4)),
