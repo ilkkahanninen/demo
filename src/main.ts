@@ -230,6 +230,8 @@ loadResources(music, ...materials, ...layers).then(() => {
         POST_EFFECT: state.postEffect,
         DISTANCE_COLOR_FX: state.distanceColorFx,
         SATURATION: state.saturation,
+        BLUE_PASS: state.bluePass,
+        CONTRAST: state.contrast,
       });
       screen.render();
     });

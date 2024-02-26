@@ -395,15 +395,22 @@ const loppuScene = (duration: number) =>
 
 const xScene = (duration: number) =>
   assignSegments({
-    camera: tunnelCam(duration),
+    camera: assignSegments({
+      pos: vector(hold(1), hold(1), hold(1))(duration),
+      lookAt: vector(sin(1, 0.2), cos(1, 0.21), sin(1, 0.12))(duration),
+      up: vector(sin(1, 0.1), hold(0), cos(1, 0.1))(duration),
+      fov: sampleAndHold(beat, add(175)(sin(30, 999))(duration)),
+    }),
     envGeometry: pesurumpu(duration),
     envFactor: linear(100, 20)(duration),
     lightCount: concat(hold(2)(duration / 2), hold(3)(duration / 2)),
     object: concat(
-      hold(0)(duration / 4),
-      hold(1)(duration / 4),
       hold(2)(duration / 4),
-      hold(3)(duration / 4)
+      hold(3)(duration / 4),
+      hold(2)(duration / 8),
+      hold(3)(duration / 8),
+      hold(2)(duration / 8),
+      hold(3)(duration / 8)
     ),
     material: materials.streakedMetal(duration),
     shader: palloShader(duration),
@@ -415,7 +422,13 @@ const xScene = (duration: number) =>
         hold((i + 0.5) * 2.7)(duration / 128)
       )
     ),
-    postEffect: repeat(32, linear(1, 0)(duration / 32)),
+    postEffect: repeat(
+      8,
+      multiplySegments(
+        repeat(4, linear(1, 0)(duration / 32)),
+        linear(1, 0)(duration / 8)
+      )
+    ),
     saturation: hold(1)(duration),
   });
 
@@ -441,10 +454,15 @@ const slut = (duration: number) =>
   });
 
 const overlayScript = concat(
-  overlay(overlays.none, bars(2)),
-  overlay(overlays.seizureWarning, bars(5) + beats(2)),
-  overlay(overlays.seizureWarning2, beat),
-  overlay(overlays.seizureWarning3, beat),
+  overlay(overlays.none, bars(4)),
+  assignSegments({
+    texture: concat(
+      hold(overlays.seizureWarning)(bars(3) + beats(2)),
+      hold(overlays.seizureWarning2)(beat),
+      hold(overlays.seizureWarning3)(beat)
+    ),
+    fx: concat(overlayFx(bars(3) + beats(3)), linear(1, 0)(beat)),
+  }),
   overlay(overlays.none, bars(16)),
 
   // Listen, you need to understand...
@@ -473,7 +491,18 @@ const overlayScript = concat(
   // huom. tästä kohtaa tarkoituksella puuttuu 1.25 iskua
 
   // We need to do some laundry
-  loop(8, (index) =>
+  repeat(
+    4,
+    concat(
+      overlay(overlays.we, beats(1)),
+      overlay(overlays.need, beats(0.25)),
+      overlay(overlays.toDo, beats(1)),
+      overlay(overlays.some, beats(0.75)),
+      overlay(overlays.laundry, beats(1)),
+      overlay(overlays.none, beats(4))
+    )
+  ),
+  loop(4, (index) =>
     concat(
       overlay(overlays.we, beats(1)),
       overlay(overlays.need, beats(0.25)),
@@ -544,37 +573,38 @@ const overlayScript = concat(
   // Teknotauko
   overlay(overlays.none, bars(8)),
 
+  // Loppupauke
   concat(
     overlay(overlays.symbol1a, beat),
-    overlay(overlays.overlay1, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol2a, beat),
-    overlay(overlays.overlay2, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol3a, beat),
-    overlay(overlays.overlay3, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol4a, beat),
-    overlay(overlays.overlay4, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol1b, beat),
-    overlay(overlays.overlay1, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol2b, beat),
-    overlay(overlays.overlay2, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol3b, beat),
-    overlay(overlays.overlay3, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol4b, beat),
-    overlay(overlays.overlay4, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol1c, beat),
-    overlay(overlays.overlay1, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol2c, beat),
-    overlay(overlays.overlay2, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol3c, beat),
-    overlay(overlays.overlay3, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol4c, beat),
-    overlay(overlays.overlay4, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol1d, beat),
-    overlay(overlays.overlay1, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol2d, beat),
-    overlay(overlays.overlay2, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol3d, beat),
-    overlay(overlays.overlay3, beat),
+    overlay(overlays.none, beat),
     overlay(overlays.symbol4d, beat),
     overlay(overlays.none, beat)
   ),
@@ -590,6 +620,26 @@ const distanceColorFx = multiplySegments(
   concat(linear(0, 1)(bars(32)))
 );
 
+const contrast = concat(
+  hold(1)(bars(24 + 2 * 16 + 4 * 8 + 8 - 2)),
+  linear(1, 2)(bars(2)),
+  hold(2)(bars(8)),
+  linear(2, 1)(bars(2))
+);
+
+const bluePass = concat(
+  hold(1)(bars(4)),
+  hold(0)(bars(2)),
+  hold(1)(bars(2)),
+  hold(1)(bars(8)),
+  repeat(
+    14,
+    concat(hold(1)(beat * 1.5), linear(0, 1)(beat * 1.5), hold(1)(beat))
+  ),
+  hold(1)(bars(2)),
+  linear(0, 1)(beat)
+);
+
 export const script = mergeSegments(
   mergeSegments(
     concat(
@@ -603,8 +653,8 @@ export const script = mergeSegments(
       drycleanScene(bars(8)),
 
       rinseAndRepeatScene(bars(8)),
-      loppuScene(bars(16)),
       xScene(bars(8)),
+      xScene(bars(16)),
       slut(bars(64))
     ),
     assignSegments({
@@ -613,5 +663,7 @@ export const script = mergeSegments(
   ),
   assignSegments({
     distanceColorFx,
+    bluePass,
+    contrast,
   })
 );

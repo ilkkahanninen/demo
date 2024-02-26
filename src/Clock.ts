@@ -20,7 +20,10 @@ export class Clock {
         case "Space":
           return this.pauseTime ? this.resume() : this.pause();
         case "ArrowRight":
-          return this.forward(10000);
+          const blockLength = 32 * 60 / this.bpm
+          const currentBlock = this.seconds() / blockLength
+          const blockLeft = 1 - (currentBlock - Math.abs(currentBlock))
+          return this.forward(blockLeft * blockLength * 1000);
         case "ArrowLeft":
           return this.rewind(10000);
       }

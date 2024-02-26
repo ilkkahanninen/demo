@@ -17,11 +17,13 @@ uniform float LAYER_ALPHA;
 uniform float POST_EFFECT;
 uniform float DISTANCE_COLOR_FX;
 uniform float SATURATION;
+uniform float BLUE_PASS;
+uniform float CONTRAST;
 
 in vec2 TEX_COORD;
 out vec4 FRAG_COLOR;
 
-const float GAMMA = 1.2f;
+const float GAMMA = 1.5f;
 
 const vec3 RGB2YUV_Y = vec3(.299000f, .587000f, .114000f);
 const vec3 RGB2YUV_U = vec3(-.168736f, -.331264f, .500000f);
@@ -38,7 +40,7 @@ vec3 textLayer(vec4 noise) {
     }
 
     float pixelSize = 40.0f * clamp((0.5f + sin(TIME * 1230.0f)) - ((2.5f - 2.5f * LAYER_FX)) + TEX_COORD.y - noise.r * 0.01f, 0.0f, 1.0f);
-    vec2 coord = TEX_COORD;
+    vec2 coord = mix(TEX_COORD, vec2(0.5), LAYER_FX * LAYER_FX * 0.05);
     if (pixelSize > 1.0f) {
         coord *= RESOLUTION;
         coord.x = floor(coord.x / pixelSize) * pixelSize;
@@ -98,20 +100,23 @@ void main() {
 
     // vec3 yuv = vec3(dot(color, RGB2YUV_Y), dot(color, RGB2YUV_U), dot(color, RGB2YUV_V)) + RGB2YUV_CONST;
 
-    // yuv += noise.rgb * NOISE_STRENGTH - vec3(NOISE_STRENGTH / 2.0);
+    // yuv += noise.rgb * NOISE_STRENGTH * 0.1 - vec3(NOISE_STRENGTH * 0.1);
     // yuv.r += bloom.r * 1.5;
     // yuv.g += bloom.g;
 
     // yuv -= RGB2YUV_CONST;
-    // vec3 rgb = vec3(dot(yuv, YUV2RGB_R), dot(yuv, YUV2RGB_G), dot(yuv, YUV2RGB_B));
+    // color = vec3(dot(yuv, YUV2RGB_R), dot(yuv, YUV2RGB_G), dot(yuv, YUV2RGB_B));
 
-    FRAG_COLOR = vec4(color, 1.0f);
     float lol = texture(FRAME, TEX_COORD).a / 25.0f * DISTANCE_COLOR_FX;
     lol *= lol;
-    FRAG_COLOR += vec4(lol, lol * 0.5f, lol * 0.1f, 1.0f);
+    color += vec3(lol, lol * 0.5f, lol * 0.1f);
 
     if (SATURATION < 1.0f) {
-        float gray = (FRAG_COLOR.r + FRAG_COLOR.g + FRAG_COLOR.b) / 3.0f + noise.r * 0.1f;
-        FRAG_COLOR = mix(vec4(gray * 0.9f, gray * 0.95f, gray, 1.0f), FRAG_COLOR, SATURATION);
+        float gray = (color.r + color.g + color.b) / 3.0f + noise.r * 0.1f;
+        color = mix(vec3(gray * 0.9f, gray * 0.95f, gray), color, SATURATION);
     }
+    color *= vec3(1.25 - 0.25 * BLUE_PASS,  1.5 - 0.5 * BLUE_PASS, BLUE_PASS);
+    color = pow(color, vec3(CONTRAST));
+
+    FRAG_COLOR = vec4(color, 1.0);
 }
