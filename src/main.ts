@@ -240,7 +240,6 @@ loadResources(music, ...materials, ...layers).then(() => {
   };
 
   window.onclick = () => {
-    document.querySelector(".progressbar")?.remove();
     document.body.className = "running";
     clock.reset();
     requestAnimationFrame(renderNext);

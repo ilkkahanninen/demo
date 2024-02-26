@@ -6,22 +6,30 @@
         margin: 0;
         background: #000;
         display: flex;
+        flex-direction: column;
+        justify-content: center;
         align-items: center;
         height: 100vh;
+      }
+      #c {
+        width: 100%;
+        display: none;
       }
       body.running {
         cursor: none;
       }
-      #c {
-        width: 100%;
+      body.running #c {
+        display: block;
+      }
+      body.running .progressbar,
+      body.running #splash {
+        display: none;
       }
       .progressbar {
-        position: absolute;
-        top: 47%;
-        bottom: 47%;
-        left: 20%;
-        right: 20%;
-        border: 3px solid white;
+        height: 30px;
+        width: 80%;
+        border: 3px solid #341;
+        border-radius: 8px;
         padding: 3px;
       }
       .progressbar * {
@@ -29,13 +37,20 @@
         justify-content: center;
         align-items: center;
         text-transform: uppercase;
-        background: white;
+        background: #cf0;
+        border-radius: 4px;
         height: 100%;
-        font-family: monospace;
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: 800;
+        font-size: 12px;
+      }
+      #splash {
+        margin: 0 auto;
       }
     </style>
   </head>
   <body>
+    <img id="splash" src="layers/splash.jpg" alt="Da Kool Demo 2" />
     <canvas id="c" width="1280" height="720"></canvas>
     <script type="module">
       import "./main.ts";

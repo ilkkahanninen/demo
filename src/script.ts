@@ -621,10 +621,10 @@ const distanceColorFx = multiplySegments(
 );
 
 const contrast = concat(
-  hold(1)(bars(24 + 2 * 16 + 4 * 8 + 8 - 2)),
-  linear(1, 2)(bars(2)),
-  hold(2)(bars(8)),
-  linear(2, 1)(bars(2))
+  hold(1)(bars(24 + 2 * 16 + 4 * 8 + 4)),
+  linear(1, 2)(bars(4)),
+  repeat(8 * 4, linear(1.6, 1)(beat)),
+  linear(1.6, 1)(bars(2))
 );
 
 const bluePass = concat(

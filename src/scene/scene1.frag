@@ -5,7 +5,7 @@ precision highp float;
 
 #env RENDER_ENVIRONMENT_MAP
 
-const int MAX_MARCHING_STEPS = 256;
+const int MAX_MARCHING_STEPS = 64;
 const float MIN_DIST = 0.0f;
 const float MAX_DIST = 50.0f;
 const float EPSILON = 0.0001f;
