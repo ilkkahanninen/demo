@@ -39,8 +39,8 @@ export const loadResources = (...resources: Resource[]): Promise<void> => {
   const root = new Resource(...resources);
   root.listenProgress((progress) => (bar.style.width = `${progress * 100}%`));
   root.promise.then(() => {
-    bar.textContent = "Click to start";
-    // document.body.removeChild(progressBar);
+    bar.textContent =
+      "Press [F] to enter fullscreen. Click pointer device to start the action.";
   });
 
   return root.promise;

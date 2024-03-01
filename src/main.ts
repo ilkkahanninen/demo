@@ -239,6 +239,14 @@ loadResources(music, ...materials, ...layers).then(() => {
     clock.requestNextFrame(renderNext);
   };
 
+  let started = false;
+
+  window.addEventListener("keydown", (event) => {
+    if (event.code == "KeyF") {
+      document.body.requestFullscreen();
+    }
+  });
+
   window.onclick = () => {
     document.body.className = "running";
     clock.reset();
