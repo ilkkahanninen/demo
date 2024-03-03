@@ -9,17 +9,17 @@
     "serve": "npx http-serve dist",
     "fft": "node fft.js && parcel src/fftTool/index.html --no-cache",
     "capture": "node ./capture.js",
-    "convert": "ffmpeg -framerate 60 -pattern_type glob -i './capture/*.png' -i './src/j9-alberga-calculus.mp3' -c:v libx264 -pix_fmt yuv420p -crf 21 capture.mp4",
+    "convert": "ffmpeg -framerate 60 -pattern_type glob -i './capture/*.png' -i './src/tekkno2.ogg' -c:v libx264 -pix_fmt yuv420p -crf 21 capture.mp4",
     "test:glb": "node -r @swc-node/register test/testGlb.ts"
   },
   "author": "Ilkka Hänninen",
   "license": "ISC",
   "devDependencies": {
-    "@parcel/transformer-glsl": "^2.4.1",
+    "@parcel/transformer-glsl": "^2.12.0",
     "@swc-node/register": "^1.6.8",
     "@types/node": "^17.0.25",
-    "parcel": "^2.4.1",
-    "puppeteer": "^19.7.2",
+    "parcel": "^2.12.0",
+    "puppeteer": "^22.3.0",
     "typescript": "^4.6.3"
   }
 }

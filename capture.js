@@ -1,6 +1,6 @@
 const puppeteer = require("puppeteer");
 
-const seconds = 3 * 60 + 20;
+const seconds = 3 * 60 + 35;
 
 const sleep = (msecs) => new Promise((resolve) => setTimeout(resolve, msecs));
 
@@ -15,7 +15,7 @@ const sleep = (msecs) => new Promise((resolve) => setTimeout(resolve, msecs));
   await page.goto("http://localhost:1234?capture");
 
   let frame = 0;
-  await page.click("canvas");
+  await page.click(".progressbar");
   await sleep(1000);
 
   while (frame < 60 * seconds) {
